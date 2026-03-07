@@ -229,11 +229,10 @@ const HeroSection = () => {
       {/* ── drag catcher ── */}
       <motion.div
         className="absolute inset-0"
-        style={{ zIndex: 5, cursor: "grab" }}
+        style={{ zIndex: 5, cursor: "grab", x: dragX }}
         drag="x"
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.05}
-        style={{ x: dragX, zIndex: 5 }}
         onDragEnd={onDragEnd}
       />
 
