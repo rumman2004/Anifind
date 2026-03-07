@@ -10,7 +10,7 @@ import {
   Scale, Eye, Server, Clock, Wifi, XCircle,
   HelpCircle, Cpu, TriangleAlert,
 } from "lucide-react";
-
+import logo from "../assets/logo.png";
 /* ══════════════════════════════════════════════════════════
    DATA
 ══════════════════════════════════════════════════════════ */
@@ -413,12 +413,12 @@ const About = () => (
           <div
             className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl flex items-center justify-center relative"
             style={{
-              background: "linear-gradient(135deg,rgba(99,102,241,.30),rgba(168,85,247,.20))",
-              border:     "1px solid rgba(99,102,241,.35)",
-              boxShadow:  "0 0 60px rgba(99,102,241,.25),0 0 120px rgba(99,102,241,.10)",
+            background: "linear-gradient(135deg,rgba(99,102,241,.30),rgba(168,85,247,.20))",
+            border:     "1px solid rgba(99,102,241,.35)",
+            boxShadow:  "0 0 60px rgba(99,102,241,.25),0 0 120px rgba(99,102,241,.10)",
             }}
           >
-            <Tv size={38} style={{ color: "#a5b4fc" }} />
+            <img src={logo} alt="AniFind Logo" className="w-19 h-19 object-contain rounded-2xl" />
             <motion.div
               className="absolute w-3 h-3 rounded-full"
               style={{
@@ -701,7 +701,7 @@ const About = () => (
             glow:  "rgba(226,232,240,.12)",
             label: "Source Code",
             desc:  "Browse, fork or contribute on GitHub",
-            href:  "https://github.com/rumman2004/AniFind",
+            href:  "https://github.com/rumman2004/Anifind",
             cta:   "View on GitHub",
           },
           {
