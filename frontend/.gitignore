@@ -1,0 +1,268 @@
+# ============================================================
+#  AniFind — Root .gitignore
+#  Covers: React/Vite frontend  +  Node/Express backend
+# ============================================================
+
+
+# ════════════════════════════════════════════════════════════
+#  DEPENDENCIES
+# ════════════════════════════════════════════════════════════
+node_modules/
+.pnp
+.pnp.js
+.yarn/install-state.gz
+
+
+# ════════════════════════════════════════════════════════════
+#  ENVIRONMENT VARIABLES  ← most important — never commit!
+# ════════════════════════════════════════════════════════════
+.env
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+.env.production
+.env.production.local
+.env.staging
+*.env
+
+
+# ════════════════════════════════════════════════════════════
+#  BUILD OUTPUT
+# ════════════════════════════════════════════════════════════
+
+# Vite / React frontend
+dist/
+dist-ssr/
+build/
+out/
+
+# Backend compiled output (if you ever add TypeScript)
+lib/
+compiled/
+
+
+# ════════════════════════════════════════════════════════════
+#  LOGS
+# ════════════════════════════════════════════════════════════
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.npm/
+
+
+# ════════════════════════════════════════════════════════════
+#  CACHE & TEMP
+# ════════════════════════════════════════════════════════════
+
+# Vite
+.vite/
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# ESLint / Prettier
+.eslintcache
+.prettiercache
+
+# TypeScript
+*.tsbuildinfo
+
+# Parcel
+.parcel-cache/
+.cache/
+
+# Turbo
+.turbo/
+
+# Temp files
+tmp/
+temp/
+.tmp/
+.temp/
+
+
+# ════════════════════════════════════════════════════════════
+#  TESTING
+# ════════════════════════════════════════════════════════════
+coverage/
+.nyc_output/
+*.lcov
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+
+# ════════════════════════════════════════════════════════════
+#  OS GENERATED
+# ════════════════════════════════════════════════════════════
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+.AppleDouble
+.LSOverride
+Icon?
+
+# Windows
+Thumbs.db
+Thumbs.db:encdata
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+ehthumbs.db
+ehthumbs_vista.db
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+
+# ════════════════════════════════════════════════════════════
+#  EDITOR & IDE
+# ════════════════════════════════════════════════════════════
+
+# VS Code — keep .vscode/extensions.json if you want
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+
+# JetBrains (WebStorm, IntelliJ)
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Vim / Neovim
+*.swp
+*.swo
+*~
+Session.vim
+.netrwhist
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+
+# Sublime Text
+*.tmlanguage.cache
+*.tmPreferences.cache
+*.stTheme.cache
+*.sublime-workspace
+
+
+# ════════════════════════════════════════════════════════════
+#  PACKAGE MANAGER LOCKS  (keep only the one you use)
+# ════════════════════════════════════════════════════════════
+# Uncomment the locks you DON'T use:
+
+# package-lock.json   ← comment out if you use npm
+# yarn.lock           ← comment out if you use yarn
+# pnpm-lock.yaml      ← comment out if you use pnpm
+
+
+# ════════════════════════════════════════════════════════════
+#  BACKEND SPECIFIC
+# ════════════════════════════════════════════════════════════
+
+# Uploaded files / user content
+uploads/
+public/uploads/
+
+# SSL certificates (never commit private keys)
+*.pem
+*.key
+*.crt
+*.cert
+*.p12
+*.pfx
+
+# Database files (local SQLite etc.)
+*.sqlite
+*.sqlite3
+*.db
+
+# PM2 runtime
+.pm2/
+ecosystem.config.js.local
+
+
+# ════════════════════════════════════════════════════════════
+#  FRONTEND SPECIFIC
+# ════════════════════════════════════════════════════════════
+
+# Storybook
+storybook-static/
+
+# Generated favicon PNGs (re-generate with the script)
+public/favicon-16.png
+public/favicon-32.png
+public/favicon-192.png
+public/favicon-512.png
+public/apple-touch-icon.png
+
+# Source maps (optional — remove if you want them in repo)
+# *.map
+
+
+# ════════════════════════════════════════════════════════════
+#  DEPLOYMENT / CI
+# ════════════════════════════════════════════════════════════
+
+# Vercel
+.vercel/
+
+# Netlify
+.netlify/
+
+# Render
+.render/
+
+# Docker
+.dockerignore
+
+# Serverless Framework
+.serverless/
+
+# AWS SAM
+.aws-sam/
+
+
+# ════════════════════════════════════════════════════════════
+#  MISC
+# ════════════════════════════════════════════════════════════
+
+# Diagnostic reports
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Optional REPL history
+.node_repl_history
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv vault
+.env.vault
+
+# Sentry auth token (if using @sentry/wizard)
+.sentryclirc
