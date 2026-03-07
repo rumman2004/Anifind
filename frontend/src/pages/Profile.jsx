@@ -31,6 +31,11 @@ const AVATARS = [
   "https://res.cloudinary.com/ddil24vfs/image/upload/v1772891279/avatar_11_kr5eze.jpg",
   "https://res.cloudinary.com/ddil24vfs/image/upload/v1772891436/avatar_13_ssss1t.jpg",
   "https://res.cloudinary.com/ddil24vfs/image/upload/v1772891437/avatar_14_edkskb.jpg",
+  "https://res.cloudinary.com/ddil24vfs/image/upload/v1772904424/avatar_16_j8tqht.jpg",
+  "https://res.cloudinary.com/ddil24vfs/image/upload/v1772904425/avatar_17_uvfujc.jpg",
+  "https://res.cloudinary.com/ddil24vfs/image/upload/v1772904426/avatar_18_t2oi9s.jpg",
+  "https://res.cloudinary.com/ddil24vfs/image/upload/v1772904429/avatar_20_gm8avg.jpg",
+  "https://res.cloudinary.com/ddil24vfs/image/upload/v1772904463/avatar_19_pu7g2f.jpg",
 ];
 
 /* ══════════════════════════════════════════════════════════
