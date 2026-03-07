@@ -26,7 +26,7 @@ const AVATARS = [
   "https://res.cloudinary.com/ddil24vfs/image/upload/v1772890187/avatar_8_ygtlnl.jpg",
   "https://res.cloudinary.com/ddil24vfs/image/upload/v1772890187/avatar_9_cox5an.jpg",
   "https://res.cloudinary.com/ddil24vfs/image/upload/v1772890187/avatar_10_jq1gzi.jpg",
-  "https://res.cloudinary.com/ddil24vfs/image/upload/v1772890187/avatar_10_jq1gzi.jpg",
+  "https://res.cloudinary.com/ddil24vfs/image/upload/v1772904245/avatar_15_fvytbc.jpg",
   "https://res.cloudinary.com/ddil24vfs/image/upload/v1772891277/avatar_12_qjlhbq.jpg",
   "https://res.cloudinary.com/ddil24vfs/image/upload/v1772891279/avatar_11_kr5eze.jpg",
   "https://res.cloudinary.com/ddil24vfs/image/upload/v1772891436/avatar_13_ssss1t.jpg",
