@@ -22,10 +22,16 @@ const scoreColor = (s) =>
 
 const statusColor = (status) => {
   if (!status) return { bg: "rgba(148,163,184,.12)", color: "rgba(148,163,184,.70)" };
-  if (status.includes("Airing"))      return { bg: "rgba(74,222,128,.12)", color: "#4ade80" };
-  if (status.includes("Finished"))    return { bg: "rgba(96,165,250,.12)", color: "#60a5fa" };
-  if (status.includes("Not yet"))     return { bg: "rgba(251,191,36,.12)",  color: "#fbbf24" };
+  if (status.includes("Airing"))   return { bg: "rgba(74,222,128,.12)",  color: "#4ade80" };
+  if (status.includes("Finished")) return { bg: "rgba(96,165,250,.12)",  color: "#60a5fa" };
+  if (status.includes("Not yet"))  return { bg: "rgba(251,191,36,.12)",  color: "#fbbf24" };
   return { bg: "rgba(148,163,184,.12)", color: "rgba(148,163,184,.70)" };
+};
+
+/* ── classify an entry as movie or series ── */
+const isMovie = (fav) => {
+  const t = (fav.type ?? "").toLowerCase();
+  return t === "movie";
 };
 
 /* ══════════════════════════════════════════════════════════
@@ -45,7 +51,7 @@ const GenrePill = ({ label }) => (
 );
 
 /* ══════════════════════════════════════════════════════════
-   REMOVE BUTTON  (shared)
+   REMOVE BUTTON
 ══════════════════════════════════════════════════════════ */
 const RemoveBtn = ({ onClick, size = 14 }) => (
   <button
@@ -53,7 +59,7 @@ const RemoveBtn = ({ onClick, size = 14 }) => (
     className="flex items-center justify-center rounded-xl transition-all
                hover:scale-110 active:scale-95"
     style={{
-      width: 30, height: 30,
+      width:      30, height: 30,
       background: "rgba(239,68,68,.12)",
       border:     "1px solid rgba(239,68,68,.20)",
       color:      "rgba(248,113,113,.80)",
@@ -77,8 +83,8 @@ const RemoveBtn = ({ onClick, size = 14 }) => (
 ══════════════════════════════════════════════════════════ */
 const GridCard = ({ fav, index, onRemove }) => {
   const [imgErr, setImgErr] = useState(false);
-  const sc  = fav.score;
-  const st  = statusColor(fav.status);
+  const sc = fav.score;
+  const st = statusColor(fav.status);
 
   return (
     <motion.div
@@ -95,7 +101,7 @@ const GridCard = ({ fav, index, onRemove }) => {
       }}
       whileHover={{ y: -4, transition: { duration: 0.22 } }}
     >
-      {/* ── poster ── */}
+      {/* poster */}
       <Link to={`/anime/${fav.animeId}`} className="relative block overflow-hidden flex-shrink-0">
         <div style={{ paddingBottom: "140%", position: "relative" }}>
           {!imgErr ? (
@@ -112,9 +118,7 @@ const GridCard = ({ fav, index, onRemove }) => {
               style={{ background: "rgba(99,102,241,.10)" }}
             >
               <Tv size={28} style={{ color: "rgba(99,102,241,.40)" }} />
-              <span className="text-[10px]" style={{ color: "rgba(148,163,184,.40)" }}>
-                No image
-              </span>
+              <span className="text-[10px]" style={{ color: "rgba(148,163,184,.40)" }}>No image</span>
             </div>
           )}
         </div>
@@ -133,8 +137,8 @@ const GridCard = ({ fav, index, onRemove }) => {
           <div
             className="absolute top-2 left-2 flex items-center gap-1 px-1.5 py-0.5 rounded-lg"
             style={{
-              background: "rgba(0,0,0,.75)",
-              border:     `1px solid ${scoreColor(sc)}44`,
+              background:     "rgba(0,0,0,.75)",
+              border:         `1px solid ${scoreColor(sc)}44`,
               backdropFilter: "blur(6px)",
             }}
           >
@@ -151,8 +155,8 @@ const GridCard = ({ fav, index, onRemove }) => {
             className="absolute top-2 right-2 px-1.5 py-0.5 rounded-lg text-[9px] font-bold uppercase"
             style={{
               background:     "rgba(0,0,0,.72)",
-              color:          "rgba(165,180,252,.85)",
-              border:         "1px solid rgba(99,102,241,.22)",
+              color:          isMovie(fav) ? "#fbbf24" : "rgba(165,180,252,.85)",
+              border:         isMovie(fav) ? "1px solid rgba(251,191,36,.28)" : "1px solid rgba(99,102,241,.22)",
               backdropFilter: "blur(6px)",
             }}
           >
@@ -161,15 +165,12 @@ const GridCard = ({ fav, index, onRemove }) => {
         )}
 
         {/* remove button — appears on hover */}
-        <div
-          className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100
-                     transition-opacity duration-200"
-        >
+        <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           <RemoveBtn onClick={() => onRemove(fav.animeId)} />
         </div>
       </Link>
 
-      {/* ── info ── */}
+      {/* info */}
       <div className="flex flex-col gap-2 p-3 flex-1">
         <Link to={`/anime/${fav.animeId}`}>
           <h3
@@ -182,19 +183,14 @@ const GridCard = ({ fav, index, onRemove }) => {
           </h3>
         </Link>
 
-        {/* genres */}
         {fav.genres?.length > 0 && (
           <div className="flex flex-wrap gap-1">
-            {fav.genres.slice(0, 3).map((g) => (
-              <GenrePill key={g} label={g} />
-            ))}
+            {fav.genres.slice(0, 3).map((g) => <GenrePill key={g} label={g} />)}
           </div>
         )}
 
-        {/* meta row */}
         <div className="flex items-center justify-between mt-auto pt-1">
           <div className="flex items-center gap-2">
-            {/* status dot */}
             <span
               className="text-[9px] font-bold px-1.5 py-0.5 rounded-md"
               style={{ background: st.bg, color: st.color }}
@@ -213,8 +209,6 @@ const GridCard = ({ fav, index, onRemove }) => {
               </span>
             )}
           </div>
-
-          {/* always-visible remove on mobile */}
           <div className="block sm:hidden">
             <RemoveBtn onClick={() => onRemove(fav.animeId)} size={12} />
           </div>
@@ -237,7 +231,7 @@ const ListRow = ({ fav, index, onRemove }) => {
       layout
       initial={{ opacity: 0, x: -16 }}
       animate={{ opacity: 1,  x: 0  }}
-      exit={{   opacity: 0,  x:  16 }}
+      exit={{   opacity: 0,  x: 16  }}
       transition={{ delay: index * 0.03 }}
       className="group flex items-center gap-4 p-3 rounded-2xl transition-all"
       style={{
@@ -245,24 +239,19 @@ const ListRow = ({ fav, index, onRemove }) => {
         border:     "1px solid rgba(255,255,255,.06)",
       }}
       whileHover={{
-        background: "rgba(99,102,241,.07)",
+        background:  "rgba(99,102,241,.07)",
         borderColor: "rgba(99,102,241,.18)",
-        transition: { duration: 0.18 },
+        transition:  { duration: 0.18 },
       }}
     >
-      {/* thumbnail */}
       <Link to={`/anime/${fav.animeId}`} className="flex-shrink-0">
-        <div
-          className="rounded-xl overflow-hidden"
-          style={{ width: 52, height: 72 }}
-        >
+        <div className="rounded-xl overflow-hidden" style={{ width: 52, height: 72 }}>
           {!imgErr ? (
             <img
               src={fav.imageUrl}
               alt={fav.titleEnglish || fav.title}
               onError={() => setImgErr(true)}
-              className="w-full h-full object-cover transition-transform duration-300
-                         group-hover:scale-105"
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
           ) : (
             <div
@@ -275,7 +264,6 @@ const ListRow = ({ fav, index, onRemove }) => {
         </div>
       </Link>
 
-      {/* main info */}
       <div className="flex-1 min-w-0">
         <Link to={`/anime/${fav.animeId}`}>
           <h3
@@ -289,58 +277,40 @@ const ListRow = ({ fav, index, onRemove }) => {
         </Link>
 
         <div className="flex items-center gap-2 flex-wrap">
-          {/* score */}
           {sc && (
-            <span
-              className="flex items-center gap-0.5 text-[10px] font-black"
-              style={{ color: scoreColor(sc) }}
-            >
-              <Star size={9} style={{ fill: scoreColor(sc) }} />
-              {sc.toFixed(1)}
+            <span className="flex items-center gap-0.5 text-[10px] font-black" style={{ color: scoreColor(sc) }}>
+              <Star size={9} style={{ fill: scoreColor(sc) }} /> {sc.toFixed(1)}
             </span>
           )}
-
-          {/* type */}
           {fav.type && (
             <span
               className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-md"
               style={{
-                background: "rgba(99,102,241,.12)",
-                border:     "1px solid rgba(99,102,241,.20)",
-                color:      "rgba(165,180,252,.70)",
+                background: isMovie(fav) ? "rgba(251,191,36,.12)"  : "rgba(99,102,241,.12)",
+                border:     isMovie(fav) ? "1px solid rgba(251,191,36,.20)" : "1px solid rgba(99,102,241,.20)",
+                color:      isMovie(fav) ? "#fbbf24"               : "rgba(165,180,252,.70)",
               }}
             >
               {fav.type}
             </span>
           )}
-
-          {/* episodes */}
           {fav.episodes && (
             <span className="text-[10px]" style={{ color: "rgba(148,163,184,.45)" }}>
               {fav.episodes} eps
             </span>
           )}
-
-          {/* status */}
-          <span
-            className="text-[9px] font-bold px-1.5 py-0.5 rounded-md"
-            style={{ background: st.bg, color: st.color }}
-          >
+          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md" style={{ background: st.bg, color: st.color }}>
             {fav.status?.replace("Currently ", "") ?? "—"}
           </span>
         </div>
 
-        {/* genres */}
         {fav.genres?.length > 0 && (
           <div className="flex gap-1 mt-1.5 flex-wrap">
-            {fav.genres.slice(0, 4).map((g) => (
-              <GenrePill key={g} label={g} />
-            ))}
+            {fav.genres.slice(0, 4).map((g) => <GenrePill key={g} label={g} />)}
           </div>
         )}
       </div>
 
-      {/* remove */}
       <div className="flex-shrink-0">
         <RemoveBtn onClick={() => onRemove(fav.animeId)} />
       </div>
@@ -351,7 +321,7 @@ const ListRow = ({ fav, index, onRemove }) => {
 /* ══════════════════════════════════════════════════════════
    EMPTY STATE
 ══════════════════════════════════════════════════════════ */
-const EmptyState = ({ filtered }) => (
+const EmptyState = ({ filtered, tab }) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
@@ -366,17 +336,25 @@ const EmptyState = ({ filtered }) => (
     >
       {filtered
         ? <Search size={32} style={{ color: "rgba(99,102,241,.50)" }} />
-        : <Heart  size={32} style={{ color: "rgba(99,102,241,.50)" }} />
+        : tab === "movies"
+        ? <Film   size={32} style={{ color: "rgba(251,191,36,.50)" }} />
+        : <Tv     size={32} style={{ color: "rgba(99,102,241,.50)" }} />
       }
     </div>
 
     <h2 className="text-xl font-black text-white mb-2">
-      {filtered ? "No matches found" : "Your list is empty"}
+      {filtered
+        ? "No matches found"
+        : tab === "movies"
+        ? "No movies saved yet"
+        : "No series saved yet"}
     </h2>
     <p className="text-sm mb-8" style={{ color: "rgba(148,163,184,.55)", maxWidth: 300 }}>
       {filtered
         ? "Try a different search term or clear the filter."
-        : "Start exploring anime and save the ones you love."}
+        : tab === "movies"
+        ? "Find a movie you love and save it to your favourites."
+        : "Explore anime series and save the ones you love."}
     </p>
 
     {!filtered && (
@@ -399,16 +377,12 @@ const EmptyState = ({ filtered }) => (
    NOT LOGGED IN
 ══════════════════════════════════════════════════════════ */
 const NotLoggedIn = () => (
-  <div
-    className="min-h-screen flex items-center justify-center px-4"
-    style={{ background: "#0a0a14" }}
-  >
+  <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "#0a0a14" }}>
     <motion.div
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       className="flex flex-col items-center text-center max-w-sm"
     >
-      {/* icon */}
       <div
         className="w-24 h-24 rounded-3xl flex items-center justify-center mb-6 relative"
         style={{
@@ -428,9 +402,7 @@ const NotLoggedIn = () => (
         </motion.div>
       </div>
 
-      <h2 className="text-2xl font-black text-white mb-2">
-        Sign in to see your favourites
-      </h2>
+      <h2 className="text-2xl font-black text-white mb-2">Sign in to see your favourites</h2>
       <p className="text-sm mb-8" style={{ color: "rgba(148,163,184,.55)" }}>
         Save anime you love and access your personal list from any device.
       </p>
@@ -468,7 +440,7 @@ const NotLoggedIn = () => (
 ══════════════════════════════════════════════════════════ */
 const StatCard = ({ icon, label, value, color }) => (
   <div
-    className="flex items-center gap-3 px-4 py-3 rounded-2xl flex-1 min-w-[120px]"
+    className="flex items-center gap-3 px-4 py-3 rounded-2xl flex-1 min-w-[110px]"
     style={{
       background: "rgba(14,14,28,.90)",
       border:     "1px solid rgba(255,255,255,.07)",
@@ -494,71 +466,244 @@ const StatCard = ({ icon, label, value, color }) => (
    SORT OPTIONS
 ══════════════════════════════════════════════════════════ */
 const SORT_OPTIONS = [
-  { value: "recent",  label: "Recently Added" },
-  { value: "score",   label: "Highest Score"  },
-  { value: "title",   label: "A → Z"          },
-  { value: "episodes", label: "Most Episodes" },
+  { value: "recent",   label: "Recently Added" },
+  { value: "score",    label: "Highest Score"  },
+  { value: "title",    label: "A → Z"          },
+  { value: "episodes", label: "Most Episodes"  },
 ];
+
+/* ══════════════════════════════════════════════════════════
+   TAB BAR
+══════════════════════════════════════════════════════════ */
+const TAB_CONFIG = [
+  {
+    id:    "all",
+    label: "All",
+    icon:  <BookMarked size={14} />,
+    activeColor:  "#a5b4fc",
+    activeBg:     "rgba(99,102,241,.18)",
+    activeBorder: "rgba(99,102,241,.35)",
+    glow:         "rgba(99,102,241,.25)",
+  },
+  {
+    id:    "series",
+    label: "Series",
+    icon:  <Tv size={14} />,
+    activeColor:  "#60a5fa",
+    activeBg:     "rgba(96,165,250,.15)",
+    activeBorder: "rgba(96,165,250,.30)",
+    glow:         "rgba(96,165,250,.20)",
+  },
+  {
+    id:    "movies",
+    label: "Movies",
+    icon:  <Film size={14} />,
+    activeColor:  "#fbbf24",
+    activeBg:     "rgba(251,191,36,.15)",
+    activeBorder: "rgba(251,191,36,.30)",
+    glow:         "rgba(251,191,36,.20)",
+  },
+];
+
+const TabBar = ({ activeTab, setActiveTab, counts }) => (
+  <div
+    className="flex items-center gap-1 p-1 rounded-2xl w-fit"
+    style={{
+      background: "rgba(255,255,255,.03)",
+      border:     "1px solid rgba(255,255,255,.07)",
+    }}
+  >
+    {TAB_CONFIG.map((tab) => {
+      const active = activeTab === tab.id;
+      return (
+        <button
+          key={tab.id}
+          onClick={() => setActiveTab(tab.id)}
+          className="relative flex items-center gap-2 px-4 py-2 rounded-xl font-bold
+                     text-sm transition-all duration-200"
+          style={{
+            color:      active ? tab.activeColor : "rgba(148,163,184,.50)",
+            background: active ? tab.activeBg    : "transparent",
+            border:     active
+              ? `1px solid ${tab.activeBorder}`
+              : "1px solid transparent",
+            boxShadow: active ? `0 0 16px ${tab.glow}` : "none",
+          }}
+        >
+          {/* animated indicator */}
+          {active && (
+            <motion.div
+              layoutId="tab-indicator"
+              className="absolute inset-0 rounded-xl"
+              style={{ background: tab.activeBg }}
+              transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}
+            />
+          )}
+
+          <span className="relative flex items-center gap-2">
+            {tab.icon}
+            {tab.label}
+            {/* count badge */}
+            <span
+              className="text-[9px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center"
+              style={{
+                background: active ? `${tab.activeColor}20` : "rgba(255,255,255,.06)",
+                color:      active ? tab.activeColor          : "rgba(148,163,184,.40)",
+                border:     active
+                  ? `1px solid ${tab.activeColor}30`
+                  : "1px solid rgba(255,255,255,.08)",
+              }}
+            >
+              {counts[tab.id] ?? 0}
+            </span>
+          </span>
+        </button>
+      );
+    })}
+  </div>
+);
+
+/* ══════════════════════════════════════════════════════════
+   SECTION DIVIDER  (Movies / Series label)
+══════════════════════════════════════════════════════════ */
+const SectionDivider = ({ icon, label, count, color }) => (
+  <div className="flex items-center gap-3 mb-4">
+    <div
+      className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+      style={{ background: `${color}14`, border: `1px solid ${color}25`, color }}
+    >
+      {icon}
+    </div>
+    <span className="font-black text-white text-base">{label}</span>
+    <span
+      className="text-[10px] font-black px-2 py-0.5 rounded-full"
+      style={{ background: `${color}14`, color, border: `1px solid ${color}22` }}
+    >
+      {count}
+    </span>
+    <div
+      className="flex-1 h-px"
+      style={{
+        background: `linear-gradient(to right, ${color}30, transparent)`,
+      }}
+    />
+  </div>
+);
 
 /* ══════════════════════════════════════════════════════════
    FAVORITES PAGE
 ══════════════════════════════════════════════════════════ */
 const Favorites = () => {
-  const { user }                     = useAuth();
+  const { user }                              = useAuth();
   const { favorites, removeFavorite, favLoading } = useFavorites();
 
-  const [search,    setSearch]    = useState("");
-  const [viewMode,  setViewMode]  = useState("grid");   // "grid" | "list"
-  const [sortBy,    setSortBy]    = useState("recent");
-  const [removing,  setRemoving]  = useState(null);      // animeId being removed
+  const [search,   setSearch]   = useState("");
+  const [viewMode, setViewMode] = useState("grid");   // "grid" | "list"
+  const [sortBy,   setSortBy]   = useState("recent");
+  const [removing, setRemoving] = useState(null);
+  const [activeTab, setActiveTab] = useState("all"); // "all" | "movies" | "series"
 
   if (!user) return <NotLoggedIn />;
 
-  /* ── filter + sort ── */
-  const filtered = favorites
-    .filter((f) => {
-      const q = search.toLowerCase();
-      return (
-        (f.titleEnglish || f.title)?.toLowerCase().includes(q) ||
-        f.genres?.some((g) => g.toLowerCase().includes(q))
-      );
-    })
-    .sort((a, b) => {
-      if (sortBy === "score")    return (b.score ?? 0)    - (a.score ?? 0);
-      if (sortBy === "title")    return (a.titleEnglish || a.title).localeCompare(b.titleEnglish || b.title);
-      if (sortBy === "episodes") return (b.episodes ?? 0) - (a.episodes ?? 0);
-      return 0; // "recent" → keep backend order
-    });
+  /* ── split ── */
+  const movies  = favorites.filter((f) =>  isMovie(f));
+  const series  = favorites.filter((f) => !isMovie(f));
 
-  /* ── stats ── */
-  const avgScore = favorites.length
-    ? (favorites.reduce((s, f) => s + (f.score ?? 0), 0) / favorites.filter(f => f.score).length).toFixed(1)
-    : "—";
-  const totalEps = favorites.reduce((s, f) => s + (f.episodes ?? 0), 0);
-  const airingCount = favorites.filter(f => f.status?.includes("Airing") && !f.status.includes("Finished")).length;
-
-  /* ── remove with optimistic loading state ── */
-  const handleRemove = async (animeId) => {
-    setRemoving(animeId);
-    try {
-      await removeFavorite(animeId);
-    } finally {
-      setRemoving(null);
-    }
+  const counts = {
+    all:    favorites.length,
+    movies: movies.length,
+    series: series.length,
   };
 
-  return (
-    <div
-      className="min-h-screen relative"
-      style={{ background: "#0a0a14" }}
+  /* ── pool based on active tab ── */
+  const pool =
+    activeTab === "movies"  ? movies  :
+    activeTab === "series"  ? series  :
+    favorites;
+
+  /* ── filter + sort ── */
+  const applyFilterSort = (list) =>
+    list
+      .filter((f) => {
+        const q = search.toLowerCase();
+        return (
+          (f.titleEnglish || f.title)?.toLowerCase().includes(q) ||
+          f.genres?.some((g) => g.toLowerCase().includes(q))
+        );
+      })
+      .sort((a, b) => {
+        if (sortBy === "score")    return (b.score ?? 0) - (a.score ?? 0);
+        if (sortBy === "title")    return (a.titleEnglish || a.title).localeCompare(b.titleEnglish || b.title);
+        if (sortBy === "episodes") return (b.episodes ?? 0) - (a.episodes ?? 0);
+        return 0;
+      });
+
+  const filtered        = applyFilterSort(pool);
+  const filteredMovies  = applyFilterSort(movies);
+  const filteredSeries  = applyFilterSort(series);
+
+  /* ── stats (based on tab) ── */
+  const statPool   = pool.filter((f) => f.score);
+  const avgScore   = statPool.length
+    ? (statPool.reduce((s, f) => s + f.score, 0) / statPool.length).toFixed(1)
+    : "—";
+  const totalEps   = pool.reduce((s, f) => s + (f.episodes ?? 0), 0);
+  const airingCount = pool.filter(
+    (f) => f.status?.includes("Airing") && !f.status.includes("Finished")
+  ).length;
+
+  /* ── remove ── */
+  const handleRemove = async (animeId) => {
+    setRemoving(animeId);
+    try { await removeFavorite(animeId); }
+    finally { setRemoving(null); }
+  };
+
+  /* ── grid renderer ── */
+  const renderGrid = (list) => (
+    <motion.div
+      layout
+      className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"
     >
+      <AnimatePresence mode="popLayout">
+        {list.map((fav, i) => (
+          <GridCard
+            key={fav._id ?? fav.animeId}
+            fav={fav}
+            index={i}
+            onRemove={handleRemove}
+          />
+        ))}
+      </AnimatePresence>
+    </motion.div>
+  );
+
+  /* ── list renderer ── */
+  const renderList = (list) => (
+    <motion.div layout className="flex flex-col gap-2.5">
+      <AnimatePresence mode="popLayout">
+        {list.map((fav, i) => (
+          <ListRow
+            key={fav._id ?? fav.animeId}
+            fav={fav}
+            index={i}
+            onRemove={handleRemove}
+          />
+        ))}
+      </AnimatePresence>
+    </motion.div>
+  );
+
+  return (
+    <div className="min-h-screen relative" style={{ background: "#0a0a14" }}>
+
       {/* background glow */}
       <div className="fixed inset-0 pointer-events-none">
         <div style={{
-          position: "absolute", top: 0, left: "30%",
+          position:   "absolute", top: 0, left: "30%",
           width: 600, height: 400,
           background: "radial-gradient(ellipse,rgba(99,102,241,.07) 0%,transparent 70%)",
-          filter: "blur(60px)",
+          filter:     "blur(60px)",
         }} />
       </div>
 
@@ -571,7 +716,7 @@ const Favorites = () => {
           className="mb-8"
         >
           {/* top row */}
-          <div className="flex items-start justify-between gap-4 mb-6">
+          <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
             <div className="flex items-center gap-4">
               <div
                 className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
@@ -624,18 +769,34 @@ const Favorites = () => {
             </div>
           </div>
 
+          {/* ── TAB BAR ── */}
+          {favorites.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1,  y: 0 }}
+              transition={{ delay: 0.08 }}
+              className="mb-6"
+            >
+              <TabBar
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                counts={counts}
+              />
+            </motion.div>
+          )}
+
           {/* stats row */}
           {favorites.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0  }}
-              transition={{ delay: 0.1 }}
+              animate={{ opacity: 1,  y: 0  }}
+              transition={{ delay: 0.12 }}
               className="flex flex-wrap gap-3 mb-6"
             >
               <StatCard
                 icon={<BookMarked size={16} />}
-                label="Total"
-                value={favorites.length}
+                label={activeTab === "all" ? "Total" : activeTab === "movies" ? "Movies" : "Series"}
+                value={pool.length}
                 color="#a5b4fc"
               />
               <StatCard
@@ -681,9 +842,8 @@ const Favorites = () => {
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search your favourites…"
+                  placeholder={`Search ${activeTab === "movies" ? "movies" : activeTab === "series" ? "series" : "favourites"}…`}
                   className="flex-1 bg-transparent outline-none text-sm text-white min-w-0"
-                  style={{ "::placeholder": { color: "rgba(148,163,184,.30)" } }}
                 />
                 <AnimatePresence>
                   {search && (
@@ -716,8 +876,7 @@ const Favorites = () => {
                   }}
                 >
                   {SORT_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}
-                            style={{ background: "#0f0f1a" }}>
+                    <option key={o.value} value={o.value} style={{ background: "#0f0f1a" }}>
                       {o.label}
                     </option>
                   ))}
@@ -729,7 +888,6 @@ const Favorites = () => {
 
         {/* ════ CONTENT ════ */}
         {favLoading ? (
-          /* skeleton */
           <div className={
             viewMode === "grid"
               ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"
@@ -749,37 +907,73 @@ const Favorites = () => {
             ))}
             <style>{`@keyframes pulse{0%,100%{opacity:.4}50%{opacity:.8}}`}</style>
           </div>
+
+        ) : activeTab === "all" && filtered.length === 0 ? (
+          <EmptyState filtered={search.length > 0} tab="all" />
+
+        ) : activeTab === "all" ? (
+          /* ── ALL TAB: show Movies section then Series section ── */
+          <AnimatePresence mode="wait">
+            <motion.div
+              key="all-view"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{   opacity: 0 }}
+              className="space-y-10"
+            >
+              {/* Movies section */}
+              {filteredMovies.length > 0 && (
+                <div>
+                  <SectionDivider
+                    icon={<Film size={14} />}
+                    label="Movies"
+                    count={filteredMovies.length}
+                    color="#fbbf24"
+                  />
+                  {viewMode === "grid"
+                    ? renderGrid(filteredMovies)
+                    : renderList(filteredMovies)}
+                </div>
+              )}
+
+              {/* Series section */}
+              {filteredSeries.length > 0 && (
+                <div>
+                  <SectionDivider
+                    icon={<Tv size={14} />}
+                    label="Series"
+                    count={filteredSeries.length}
+                    color="#60a5fa"
+                  />
+                  {viewMode === "grid"
+                    ? renderGrid(filteredSeries)
+                    : renderList(filteredSeries)}
+                </div>
+              )}
+
+              {/* no results for current search in all-tab */}
+              {filteredMovies.length === 0 && filteredSeries.length === 0 && (
+                <EmptyState filtered={search.length > 0} tab="all" />
+              )}
+            </motion.div>
+          </AnimatePresence>
+
         ) : filtered.length === 0 ? (
-          <EmptyState filtered={search.length > 0} />
-        ) : viewMode === "grid" ? (
-          <motion.div
-            layout
-            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"
-          >
-            <AnimatePresence mode="popLayout">
-              {filtered.map((fav, i) => (
-                <GridCard
-                  key={fav._id ?? fav.animeId}
-                  fav={{ ...fav, _removing: removing === fav.animeId }}
-                  index={i}
-                  onRemove={handleRemove}
-                />
-              ))}
-            </AnimatePresence>
-          </motion.div>
+          <EmptyState filtered={search.length > 0} tab={activeTab} />
+
         ) : (
-          <motion.div layout className="flex flex-col gap-2.5">
-            <AnimatePresence mode="popLayout">
-              {filtered.map((fav, i) => (
-                <ListRow
-                  key={fav._id ?? fav.animeId}
-                  fav={fav}
-                  index={i}
-                  onRemove={handleRemove}
-                />
-              ))}
-            </AnimatePresence>
-          </motion.div>
+          /* ── MOVIES or SERIES tab ── */
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1,  y: 0  }}
+              exit={{   opacity: 0,  y: -8  }}
+              transition={{ duration: 0.22 }}
+            >
+              {viewMode === "grid" ? renderGrid(filtered) : renderList(filtered)}
+            </motion.div>
+          </AnimatePresence>
         )}
 
         {/* result count when filtering */}
@@ -790,7 +984,8 @@ const Favorites = () => {
             className="text-center text-xs mt-6"
             style={{ color: "rgba(148,163,184,.38)" }}
           >
-            Showing {filtered.length} of {favorites.length} favourites
+            Showing {filtered.length} of {pool.length}{" "}
+            {activeTab === "movies" ? "movies" : activeTab === "series" ? "series" : "favourites"}
           </motion.p>
         )}
       </div>
