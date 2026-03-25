@@ -2,10 +2,6 @@
 
 A modern anime discovery platform built with React and Node.js, powered by the Jikan API (MyAnimeList). Browse seasonal anime, explore detailed information, watch trailers, and manage your personal favorites list.
 
-![AniFind Banner](# AniFind 🎌
-
-A modern anime discovery platform built with React and Node.js, powered by the Jikan API (MyAnimeList). Browse seasonal anime, explore detailed information, watch trailers, and manage your personal favorites list.
-
 ![AniFind Banner](https://res.cloudinary.com/ddil24vfs/image/upload/v1772903287/Screenshot_2026-03-07_223700_rkjydf.png?text=AniFind+🎌)
 
 ## ✨ Features
