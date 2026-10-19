@@ -38,32 +38,29 @@ const scoreColor = (s) =>
 ══════════════════════════════════════════════════════════ */
 const NavLogo = ({ size = 32 }) => (
   <Link to="/" className="flex items-center gap-2.5 flex-shrink-0 group">
-    {/* image wrapper — glow + hover tilt */}
-    <div
-      className="overflow-hidden rounded-xl flex-shrink-0 transition-all duration-300
-                 group-hover:scale-110 group-hover:rotate-3"
+    {/* image — natural, unrounded */}
+    <img
+      src={logo}
+      alt="AniFind logo"
+      className="flex-shrink-0 object-contain transition-transform duration-300 group-hover:scale-105"
       style={{
-        width:     size,
-        height:    size,
-        boxShadow: "0 0 18px rgba(99,102,241,.50)",
-        border:    "1.5px solid rgba(99,102,241,.35)",
+        height: size,
+        width: "auto",
+        filter: "drop-shadow(0 2px 8px var(--logo-glow, rgba(99,102,241,.35)))",
       }}
-    >
-      <img
-        src={logo}
-        alt="AniFind logo"
-        className="w-full h-full object-cover"
-        draggable={false}
-      />
-    </div>
+      draggable={false}
+    />
 
     {/* wordmark */}
     <span
-      className="font-black text-white tracking-tight transition-opacity duration-200
-                 group-hover:opacity-90"
-      style={{ fontSize: size * 0.53 }}
+      className="font-black tracking-tight transition-opacity duration-200 group-hover:opacity-90"
+      style={{
+        fontSize: size * 0.53,
+        color: "var(--logo-text, var(--text-heading, #ffffff))",
+        fontFamily: "var(--font-heading, sans-serif)",
+      }}
     >
-      Ani<span style={{ color: "#a5b4fc" }}>Find</span>
+      Ani<span style={{ color: "var(--logo-accent, #a5b4fc)" }}>Find</span>
     </span>
   </Link>
 );
@@ -86,8 +83,8 @@ const UserAvatar = ({ user, size = 28, radius = 10, className = "" }) => {
           width:        size,
           height:       size,
           borderRadius: radius,
-          border:       "1.5px solid rgba(99,102,241,.40)",
-          boxShadow:    "0 0 0 2px rgba(99,102,241,.15)",
+          border:       "1.5px solid var(--avatar-border, rgba(99,102,241,.40))",
+          boxShadow:    "0 0 0 2px var(--avatar-glow, rgba(99,102,241,.15))",
         }}
       >
         <img
@@ -109,8 +106,8 @@ const UserAvatar = ({ user, size = 28, radius = 10, className = "" }) => {
         height:       size,
         borderRadius: radius,
         fontSize,
-        background:   "linear-gradient(135deg,#6366f1,#8b5cf6)",
-        boxShadow:    "0 0 0 2px rgba(99,102,241,.35)",
+        background:   "var(--avatar-fallback-bg, linear-gradient(135deg,#6366f1,#8b5cf6))",
+        boxShadow:    "0 0 0 2px var(--avatar-glow, rgba(99,102,241,.35))",
       }}
     >
       {initial}
@@ -143,18 +140,18 @@ const SuggestionItem = ({ anime, selected, onSelect, onHover, index }) => {
         onMouseEnter={() => onHover(index)}
         className="w-full flex items-center gap-3 px-3.5 py-2.5 text-left transition-all duration-150"
         style={{
-          background: selected ? "rgba(99,102,241,.12)" : "transparent",
-          borderLeft: selected ? "2px solid rgba(99,102,241,.55)" : "2px solid transparent",
+          background: selected ? "var(--nav-link-active-bg, rgba(99,102,241,.12))" : "transparent",
+          borderLeft: selected ? "2px solid var(--color-primary, rgba(99,102,241,.55))" : "2px solid transparent",
         }}
       >
         <div
           className="flex-shrink-0 rounded-xl overflow-hidden"
           style={{
-            width:     36,
-            height:    50,
-            background: "rgba(255,255,255,.06)",
-            border:     "1px solid rgba(255,255,255,.08)",
-            boxShadow:  selected ? "0 0 0 2px rgba(99,102,241,.30)" : "none",
+            width:      36,
+            height:     50,
+            background: "var(--card-pill-bg, rgba(255,255,255,.06))",
+            border:     "1px solid var(--border-subtle, rgba(255,255,255,.08))",
+            boxShadow:  selected ? "0 0 0 2px var(--nav-link-active-border, rgba(99,102,241,.30))" : "none",
           }}
         >
           {img ? (
@@ -165,7 +162,7 @@ const SuggestionItem = ({ anime, selected, onSelect, onHover, index }) => {
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <Tv size={13} style={{ color: "rgba(148,163,184,.30)" }} />
+              <Tv size={13} style={{ color: "var(--text-muted, rgba(148,163,184,.30))" }} />
             </div>
           )}
         </div>
@@ -173,13 +170,13 @@ const SuggestionItem = ({ anime, selected, onSelect, onHover, index }) => {
         <div className="flex-1 min-w-0">
           <p
             className="text-sm font-semibold leading-tight truncate transition-colors"
-            style={{ color: selected ? "#a5b4fc" : "#fff" }}
+            style={{ color: selected ? "var(--nav-link-active-icon, #a5b4fc)" : "var(--text-heading, #fff)" }}
           >
             {title}
           </p>
           {anime.title_english && anime.title !== anime.title_english && (
             <p className="text-[10px] truncate mt-0.5"
-               style={{ color: "rgba(148,163,184,.38)" }}>
+               style={{ color: "var(--text-muted, rgba(148,163,184,.38))" }}>
               {anime.title}
             </p>
           )}
@@ -194,20 +191,20 @@ const SuggestionItem = ({ anime, selected, onSelect, onHover, index }) => {
             {anime.type && (
               <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-md"
                     style={{
-                      background: "rgba(99,102,241,.12)",
-                      border:     "1px solid rgba(99,102,241,.20)",
-                      color:      "rgba(165,180,252,.70)",
+                      background: "var(--card-genre-bg, rgba(99,102,241,.12))",
+                      border:     "1px solid var(--card-genre-border, rgba(99,102,241,.20))",
+                      color:      "var(--card-genre-color, rgba(165,180,252,.70))",
                     }}>
                 {anime.type}
               </span>
             )}
             {anime.episodes && (
-              <span className="text-[9px]" style={{ color: "rgba(148,163,184,.38)" }}>
+              <span className="text-[9px]" style={{ color: "var(--text-muted, rgba(148,163,184,.38))" }}>
                 {anime.episodes} eps
               </span>
             )}
             {anime.year && (
-              <span className="text-[9px]" style={{ color: "rgba(148,163,184,.30)" }}>
+              <span className="text-[9px]" style={{ color: "var(--text-muted, rgba(148,163,184,.30))" }}>
                 {anime.year}
               </span>
             )}
@@ -222,7 +219,7 @@ const SuggestionItem = ({ anime, selected, onSelect, onHover, index }) => {
           size={11}
           className="flex-shrink-0 transition-all"
           style={{
-            color:     selected ? "rgba(99,102,241,.70)" : "rgba(148,163,184,.20)",
+            color:     selected ? "var(--nav-link-active-icon, rgba(99,102,241,.70))" : "var(--text-muted, rgba(148,163,184,.20))",
             transform: selected ? "translateX(2px)"      : "translateX(0)",
           }}
         />
@@ -248,29 +245,30 @@ const SuggestionsDropdown = ({
         className="absolute left-0 right-0 z-[100] overflow-hidden"
         style={{
           top:             "calc(100% + 4px)",
-          background:      "rgba(10,10,22,.97)",
-          border:          "1px solid rgba(99,102,241,.22)",
+          background:      "var(--nav-dropdown-bg, rgba(10,10,22,.97))",
+          border:          "1px solid var(--nav-dropdown-border, rgba(99,102,241,.22))",
           borderRadius:    14,
-          boxShadow:       "0 20px 60px rgba(0,0,0,.70),0 4px 20px rgba(99,102,241,.12)",
+          boxShadow:       "var(--nav-dropdown-shadow, 0 20px 60px rgba(0,0,0,.70))",
+          backdropFilter:  "blur(24px)",
           transformOrigin: "top",
         }}
       >
         {loading && (
           <div className="flex items-center gap-2.5 px-4 py-4">
             <div className="w-4 h-4 rounded-full border-2 border-transparent flex-shrink-0"
-                 style={{ borderTopColor: "#a5b4fc", animation: "spin .7s linear infinite" }} />
-            <span className="text-xs" style={{ color: "rgba(148,163,184,.55)" }}>
-              Searching for <span style={{ color: "#a5b4fc" }}>"{query}"</span>…
+                 style={{ borderTopColor: "var(--color-primary, #a5b4fc)", animation: "spin .7s linear infinite" }} />
+            <span className="text-xs" style={{ color: "var(--text-muted, rgba(148,163,184,.55))" }}>
+              Searching for <span style={{ color: "var(--color-primary, #a5b4fc)" }}>"{query}"</span>…
             </span>
           </div>
         )}
 
         {!loading && suggestions.length === 0 && (
           <div className="flex flex-col items-center gap-2 py-7 px-4">
-            <Search size={22} style={{ color: "rgba(99,102,241,.30)" }} />
-            <p className="text-xs text-center" style={{ color: "rgba(148,163,184,.50)" }}>
+            <Search size={22} style={{ color: "var(--color-primary, rgba(99,102,241,.30))" }} />
+            <p className="text-xs text-center" style={{ color: "var(--text-muted, rgba(148,163,184,.50))" }}>
               No results for{" "}
-              <span className="font-semibold" style={{ color: "rgba(165,180,252,.70)" }}>
+              <span className="font-semibold" style={{ color: "var(--color-primary, rgba(165,180,252,.70))" }}>
                 "{query}"
               </span>
             </p>
@@ -279,9 +277,9 @@ const SuggestionsDropdown = ({
               className="flex items-center gap-1.5 text-[10px] font-semibold
                          px-3 py-1.5 rounded-lg transition-all hover:scale-105 mt-1"
               style={{
-                background: "rgba(99,102,241,.14)",
-                color:      "#a5b4fc",
-                border:     "1px solid rgba(99,102,241,.24)",
+                background: "var(--nav-link-active-bg, rgba(99,102,241,.14))",
+                color:      "var(--nav-link-active-icon, #a5b4fc)",
+                border:     "1px solid var(--nav-link-active-border, rgba(99,102,241,.24))",
               }}
             >
               <Search size={9} /> Full search for "{query}"
@@ -292,15 +290,15 @@ const SuggestionsDropdown = ({
         {!loading && suggestions.length > 0 && (
           <>
             <div className="flex items-center justify-between px-3.5 pt-2.5 pb-1.5"
-                 style={{ borderBottom: "1px solid rgba(255,255,255,.05)" }}>
+                 style={{ borderBottom: "1px solid var(--border-subtle, rgba(255,255,255,.05))" }}>
               <div className="flex items-center gap-1.5">
-                <TrendingUp size={10} style={{ color: "rgba(99,102,241,.60)" }} />
+                <TrendingUp size={10} style={{ color: "var(--color-primary, rgba(99,102,241,.60))" }} />
                 <span className="text-[9px] uppercase tracking-widest font-bold"
-                      style={{ color: "rgba(148,163,184,.38)" }}>
+                      style={{ color: "var(--text-muted, rgba(148,163,184,.38))" }}>
                   Top matches
                 </span>
               </div>
-              <span className="text-[9px]" style={{ color: "rgba(148,163,184,.28)" }}>
+              <span className="text-[9px]" style={{ color: "var(--text-muted, rgba(148,163,184,.28))" }}>
                 {suggestions.length} found
               </span>
             </div>
@@ -323,14 +321,14 @@ const SuggestionsDropdown = ({
               className="w-full flex items-center justify-center gap-2 py-2.5 text-xs
                          font-semibold transition-all hover:brightness-125 group"
               style={{
-                background: "rgba(99,102,241,.08)",
-                borderTop:  "1px solid rgba(99,102,241,.14)",
-                color:      "rgba(165,180,252,.70)",
+                background: "var(--nav-link-active-bg, rgba(99,102,241,.08))",
+                borderTop:  "1px solid var(--border-subtle, rgba(99,102,241,.14))",
+                color:      "var(--nav-link-active-icon, rgba(165,180,252,.70))",
               }}
             >
               <Search size={10} />
               See all results for{" "}
-              <span className="font-black" style={{ color: "#a5b4fc" }}>"{query}"</span>
+              <span className="font-black" style={{ color: "var(--color-primary, #a5b4fc)" }}>"{query}"</span>
               <ChevronRight size={11} className="transition-transform group-hover:translate-x-0.5" />
             </button>
           </>
@@ -414,14 +412,14 @@ const NavbarSearch = ({ onClose }) => {
       <div
         className="flex items-center gap-2 px-3.5 py-2.5 transition-all"
         style={{
-          background:   "rgba(255,255,255,.06)",
-          border:       `1px solid ${focused ? "rgba(99,102,241,.50)" : "rgba(255,255,255,.10)"}`,
-          boxShadow:    focused ? "0 0 0 3px rgba(99,102,241,.10)" : "none",
+          background:   "var(--bg-surface, rgba(255,255,255,.06))",
+          border:       `1px solid ${focused ? "var(--color-primary, rgba(99,102,241,.50))" : "var(--border-subtle, rgba(255,255,255,.10))"}`,
+          boxShadow:    focused ? "0 0 0 3px var(--border-accent, rgba(99,102,241,.10))" : "none",
           transition:   "border-color .2s, box-shadow .2s",
           borderRadius: dropVisible ? "16px 16px 0 0" : "16px",
         }}
       >
-        <Search size={15} style={{ color: "rgba(148,163,184,.50)", flexShrink: 0 }} />
+        <Search size={15} style={{ color: "var(--text-muted, rgba(148,163,184,.50))", flexShrink: 0 }} />
         <input
           ref={inputRef}
           type="text"
@@ -431,7 +429,8 @@ const NavbarSearch = ({ onClose }) => {
           onFocus={() => { setFocused(true); if (query.trim().length >= 2) setDropVisible(true); }}
           onBlur={() => setFocused(false)}
           placeholder="Search anime, movies, series…"
-          className="flex-1 bg-transparent outline-none text-sm text-white placeholder:text-white/30 min-w-0"
+          className="flex-1 bg-transparent outline-none text-sm min-w-0 placeholder:opacity-40"
+          style={{ color: "var(--text-heading, #fff)" }}
         />
         <AnimatePresence>
           {query && (
@@ -442,9 +441,9 @@ const NavbarSearch = ({ onClose }) => {
               onClick={() => { setQuery(""); setSuggestions([]); setDropVisible(false); inputRef.current?.focus(); }}
               className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center
                          transition-all hover:scale-110"
-              style={{ background: "rgba(255,255,255,.10)" }}
+              style={{ background: "var(--border-subtle, rgba(255,255,255,.10))" }}
             >
-              <X size={10} className="text-white" />
+              <X size={10} style={{ color: "var(--text-heading, #fff)" }} />
             </motion.button>
           )}
         </AnimatePresence>
@@ -453,9 +452,9 @@ const NavbarSearch = ({ onClose }) => {
           className="flex-shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs
                      font-semibold transition-all hover:scale-105 active:scale-95"
           style={{
-            background: "rgba(99,102,241,.22)",
-            color:      "#a5b4fc",
-            border:     "1px solid rgba(99,102,241,.30)",
+            background: "var(--btn-primary-bg, rgba(99,102,241,.22))",
+            color:      "var(--btn-primary-text, #a5b4fc)",
+            border:     "1px solid var(--border-accent, rgba(99,102,241,.30))",
           }}
         >
           <Search size={10} /> Search
@@ -523,13 +522,13 @@ const Navbar = () => {
       className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
       style={{
         background:     scrolled
-          ? "rgba(10,10,20,.94)"
-          : "linear-gradient(to bottom,rgba(10,10,20,.82) 0%,transparent 100%)",
+          ? "var(--nav-bg, rgba(10,10,20,.94))"
+          : "linear-gradient(to bottom, var(--nav-bg, rgba(10,10,20,.82)) 0%, transparent 100%)",
         backdropFilter: scrolled ? "blur(18px)" : "blur(0px)",
-        borderBottom:   scrolled ? "1px solid rgba(255,255,255,.06)" : "none",
+        borderBottom:   scrolled ? "1px solid var(--nav-border, rgba(255,255,255,.06))" : "none",
       }}
     >
-      <div className="w-full px-4 sm:px-8 lg:px-14">
+      <div className="w-full pl-4 sm:pl-8 lg:pl-12 pr-14 sm:pr-18 lg:pr-24">
         <div className="flex items-center justify-between h-16">
 
           {/* ══ LEFT — logo + desktop links ══ */}
@@ -549,24 +548,28 @@ const Navbar = () => {
                     className="relative flex items-center gap-1.5 px-3.5 py-2 rounded-xl
                                text-sm font-medium transition-all duration-200"
                     style={{
-                      color:      active ? "#fff"                           : "rgba(255,255,255,.50)",
-                      background: active ? "rgba(99,102,241,.15)"           : "transparent",
-                      border:     active ? "1px solid rgba(99,102,241,.25)" : "1px solid transparent",
+                      color:      active ? "var(--nav-link-active-color, #fff)"           : "var(--nav-link-color, rgba(255,255,255,.50))",
+                      background: active ? "var(--nav-link-active-bg, rgba(99,102,241,.15))" : "transparent",
+                      border:     active ? "1px solid var(--nav-link-active-border, rgba(99,102,241,.25))" : "1px solid transparent",
                     }}
                     onMouseEnter={e => {
                       if (!active) {
-                        e.currentTarget.style.color      = "rgba(255,255,255,.90)";
-                        e.currentTarget.style.background = "rgba(255,255,255,.06)";
+                        e.currentTarget.style.color      = "var(--nav-link-hover-color, #ffffff)";
+                        e.currentTarget.style.background = "var(--nav-link-hover-bg, rgba(255,255,255,.06))";
                       }
                     }}
                     onMouseLeave={e => {
                       if (!active) {
-                        e.currentTarget.style.color      = "rgba(255,255,255,.50)";
+                        e.currentTarget.style.color      = "var(--nav-link-color, rgba(255,255,255,.50))";
                         e.currentTarget.style.background = "transparent";
                       }
                     }}
                   >
-                    <span style={{ color: active ? "#a5b4fc" : "inherit", opacity: active ? 1 : 0.6 }}>
+                    <span style={{
+                      color: active ? "var(--nav-link-active-icon, #a5b4fc)" : "currentColor",
+                      opacity: active ? 1 : 0.75,
+                      transition: "color .2s, opacity .2s",
+                    }}>
                       {icon}
                     </span>
                     {label}
@@ -574,7 +577,7 @@ const Navbar = () => {
                       <motion.div
                         layoutId="nav-pill"
                         className="absolute inset-0 rounded-xl pointer-events-none"
-                        style={{ border: "1px solid rgba(99,102,241,.30)" }}
+                        style={{ border: "1px solid var(--nav-link-active-border, rgba(99,102,241,.30))" }}
                         transition={{ type: "spring", stiffness: 380, damping: 30 }}
                       />
                     )}
@@ -590,11 +593,23 @@ const Navbar = () => {
             {/* Search toggle */}
             <button
               onClick={() => setSearchOpen((s) => !s)}
-              className="p-2.5 rounded-xl transition-all hover:scale-105 active:scale-95"
+              className="p-2.5 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95"
               style={{
-                background: searchOpen ? "rgba(99,102,241,.20)"          : "rgba(255,255,255,.06)",
-                color:      searchOpen ? "#a5b4fc"                        : "rgba(255,255,255,.55)",
-                border:     searchOpen ? "1px solid rgba(99,102,241,.30)" : "1px solid rgba(255,255,255,.08)",
+                background: searchOpen ? "var(--nav-link-active-bg, rgba(99,102,241,.20))" : "var(--nav-btn-bg, rgba(255,255,255,.06))",
+                color:      searchOpen ? "var(--nav-link-active-icon, #a5b4fc)" : "var(--nav-btn-color, rgba(255,255,255,.70))",
+                border:     searchOpen ? "1px solid var(--nav-link-active-border, rgba(99,102,241,.30))" : "1px solid var(--nav-btn-border, rgba(255,255,255,.08))",
+              }}
+              onMouseEnter={e => {
+                if (!searchOpen) {
+                  e.currentTarget.style.background = "var(--nav-btn-hover-bg, rgba(255,255,255,.12))";
+                  e.currentTarget.style.color      = "var(--nav-btn-hover-color, #ffffff)";
+                }
+              }}
+              onMouseLeave={e => {
+                if (!searchOpen) {
+                  e.currentTarget.style.background = "var(--nav-btn-bg, rgba(255,255,255,.06))";
+                  e.currentTarget.style.color      = "var(--nav-btn-color, rgba(255,255,255,.70))";
+                }
               }}
               aria-label="Toggle search"
             >
@@ -606,12 +621,24 @@ const Navbar = () => {
                 {/* Favourites */}
                 <Link
                   to="/favorites"
-                  className="relative p-2.5 rounded-xl transition-all hover:scale-105 active:scale-95"
+                  className="relative p-2.5 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95"
                   style={{
-                    background: location.pathname === "/favorites" ? "rgba(236,72,153,.18)" : "rgba(255,255,255,.06)",
-                    color:      location.pathname === "/favorites" ? "#f9a8d4"              : "rgba(255,255,255,.55)",
+                    background: location.pathname === "/favorites" ? "rgba(236,72,153,.18)" : "var(--nav-btn-bg, rgba(255,255,255,.06))",
+                    color:      location.pathname === "/favorites" ? "#ec4899" : "var(--nav-btn-color, rgba(255,255,255,.70))",
                     border:     location.pathname === "/favorites"
-                      ? "1px solid rgba(236,72,153,.28)" : "1px solid rgba(255,255,255,.08)",
+                      ? "1px solid rgba(236,72,153,.35)" : "1px solid var(--nav-btn-border, rgba(255,255,255,.08))",
+                  }}
+                  onMouseEnter={e => {
+                    if (location.pathname !== "/favorites") {
+                      e.currentTarget.style.background = "var(--nav-btn-hover-bg, rgba(255,255,255,.12))";
+                      e.currentTarget.style.color      = "#ec4899";
+                    }
+                  }}
+                  onMouseLeave={e => {
+                    if (location.pathname !== "/favorites") {
+                      e.currentTarget.style.background = "var(--nav-btn-bg, rgba(255,255,255,.06))";
+                      e.currentTarget.style.color      = "var(--nav-btn-color, rgba(255,255,255,.70))";
+                    }
                   }}
                   aria-label="Favourites"
                 >
@@ -634,17 +661,27 @@ const Navbar = () => {
                 <div className="relative" ref={dropRef}>
                   <button
                     onClick={() => setDropOpen((d) => !d)}
-                    className="flex items-center gap-2 pl-1 pr-2.5 py-1 rounded-xl
-                               transition-all hover:scale-105 active:scale-95"
+                    className="flex items-center gap-2 pl-1.5 pr-2.5 py-1 rounded-xl
+                               transition-all duration-200 hover:scale-105 active:scale-95"
                     style={{
-                      background: dropOpen ? "rgba(99,102,241,.15)"          : "rgba(255,255,255,.06)",
-                      border:     dropOpen ? "1px solid rgba(99,102,241,.28)" : "1px solid rgba(255,255,255,.08)",
+                      background: dropOpen ? "var(--nav-link-active-bg, rgba(99,102,241,.15))" : "var(--nav-btn-bg, rgba(255,255,255,.06))",
+                      border:     dropOpen ? "1px solid var(--nav-link-active-border, rgba(99,102,241,.28))" : "1px solid var(--nav-btn-border, rgba(255,255,255,.08))",
+                    }}
+                    onMouseEnter={e => {
+                      if (!dropOpen) {
+                        e.currentTarget.style.background = "var(--nav-btn-hover-bg, rgba(255,255,255,.12))";
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (!dropOpen) {
+                        e.currentTarget.style.background = "var(--nav-btn-bg, rgba(255,255,255,.06))";
+                      }
                     }}
                   >
                     <UserAvatar user={user} size={28} radius={8} />
                     <span
                       className="hidden sm:block text-xs font-semibold max-w-[72px] truncate"
-                      style={{ color: "rgba(255,255,255,.75)" }}
+                      style={{ color: "var(--nav-user-text, rgba(255,255,255,.85))" }}
                     >
                       {user.username}
                     </span>
@@ -653,7 +690,7 @@ const Navbar = () => {
                       transition={{ duration: 0.2 }}
                       className="hidden sm:block"
                     >
-                      <ChevronDown size={12} style={{ color: "rgba(255,255,255,.38)" }} />
+                      <ChevronDown size={12} style={{ color: "var(--nav-btn-color, rgba(255,255,255,.45))" }} />
                     </motion.div>
                   </button>
 
@@ -666,23 +703,24 @@ const Navbar = () => {
                         transition={{ duration: 0.15, ease: "easeOut" }}
                         className="absolute right-0 mt-2.5 w-56 rounded-2xl overflow-hidden"
                         style={{
-                          background:     "rgba(12,12,24,.97)",
-                          border:         "1px solid rgba(255,255,255,.10)",
-                          boxShadow:      "0 20px 56px rgba(0,0,0,.70),0 4px 16px rgba(99,102,241,.10)",
+                          background:     "var(--nav-dropdown-bg, rgba(12,12,24,.97))",
+                          border:         "1px solid var(--nav-dropdown-border, rgba(255,255,255,.10))",
+                          boxShadow:      "var(--nav-dropdown-shadow, 0 20px 56px rgba(0,0,0,.70))",
                           backdropFilter: "blur(24px)",
                         }}
                       >
                         {/* dropdown header */}
                         <div className="px-4 py-3"
-                             style={{ borderBottom: "1px solid rgba(255,255,255,.07)" }}>
+                             style={{ borderBottom: "1px solid var(--border-subtle, rgba(255,255,255,.07))" }}>
                           <div className="flex items-center gap-3">
                             <UserAvatar user={user} size={38} radius={10} />
                             <div className="min-w-0">
-                              <p className="text-white text-sm font-bold leading-tight truncate">
+                              <p className="text-sm font-bold leading-tight truncate"
+                                 style={{ color: "var(--text-heading, #ffffff)" }}>
                                 {user.username}
                               </p>
                               <p className="text-xs truncate"
-                                 style={{ color: "rgba(148,163,184,.45)" }}>
+                                 style={{ color: "var(--text-muted, rgba(148,163,184,.45))" }}>
                                 {user.email}
                               </p>
                             </div>
@@ -702,25 +740,25 @@ const Navbar = () => {
                               to={to}
                               onClick={() => setDropOpen(false)}
                               className="flex items-center gap-3 px-4 py-2.5 text-sm transition-all"
-                              style={{ color: "rgba(255,255,255,.60)" }}
+                              style={{ color: "var(--text-main, rgba(255,255,255,.70))" }}
                               onMouseEnter={e => {
-                                e.currentTarget.style.background = "rgba(255,255,255,.06)";
-                                e.currentTarget.style.color      = "#fff";
+                                e.currentTarget.style.background = "var(--nav-link-hover-bg, rgba(255,255,255,.06))";
+                                e.currentTarget.style.color      = "var(--text-heading, #fff)";
                               }}
                               onMouseLeave={e => {
                                 e.currentTarget.style.background = "transparent";
-                                e.currentTarget.style.color      = "rgba(255,255,255,.60)";
+                                e.currentTarget.style.color      = "var(--text-main, rgba(255,255,255,.70))";
                               }}
                             >
-                              <span style={{ color: "rgba(99,102,241,.75)" }}>{icon}</span>
+                              <span style={{ color: "var(--color-primary, rgba(99,102,241,.75))" }}>{icon}</span>
                               {label}
                               {badge && (
                                 <span
                                   className="ml-auto text-[10px] font-black px-1.5 py-0.5 rounded-full"
                                   style={{
-                                    background: "rgba(99,102,241,.22)",
-                                    color:      "#a5b4fc",
-                                    border:     "1px solid rgba(99,102,241,.30)",
+                                    background: "var(--card-genre-bg, rgba(99,102,241,.22))",
+                                    color:      "var(--card-genre-color, #a5b4fc)",
+                                    border:     "1px solid var(--card-genre-border, rgba(99,102,241,.30))",
                                   }}
                                 >
                                   {badge}
@@ -730,20 +768,20 @@ const Navbar = () => {
                           ))}
                         </div>
 
-                        <div style={{ borderTop: "1px solid rgba(255,255,255,.07)" }} />
+                        <div style={{ borderTop: "1px solid var(--border-subtle, rgba(255,255,255,.07))" }} />
 
                         <div className="py-1.5">
                           <button
                             onClick={handleLogout}
                             className="w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-all"
-                            style={{ color: "rgba(248,113,113,.75)" }}
+                            style={{ color: "#ef4444" }}
                             onMouseEnter={e => {
                               e.currentTarget.style.background = "rgba(239,68,68,.08)";
-                              e.currentTarget.style.color      = "#fca5a5";
+                              e.currentTarget.style.color      = "#dc2626";
                             }}
                             onMouseLeave={e => {
                               e.currentTarget.style.background = "transparent";
-                              e.currentTarget.style.color      = "rgba(248,113,113,.75)";
+                              e.currentTarget.style.color      = "#ef4444";
                             }}
                           >
                             <LogOut size={13} /> Sign Out
@@ -760,20 +798,29 @@ const Navbar = () => {
                   to="/login"
                   className="px-4 py-2 text-sm font-medium rounded-xl transition-all hover:scale-105"
                   style={{
-                    color:      "rgba(255,255,255,.60)",
-                    background: "rgba(255,255,255,.06)",
-                    border:     "1px solid rgba(255,255,255,.08)",
+                    color:      "var(--nav-btn-color, rgba(255,255,255,.70))",
+                    background: "var(--nav-btn-bg, rgba(255,255,255,.06))",
+                    border:     "1px solid var(--nav-btn-border, rgba(255,255,255,.08))",
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.background = "var(--nav-btn-hover-bg, rgba(255,255,255,.12))";
+                    e.currentTarget.style.color      = "var(--nav-btn-hover-color, #ffffff)";
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.background = "var(--nav-btn-bg, rgba(255,255,255,.06))";
+                    e.currentTarget.style.color      = "var(--nav-btn-color, rgba(255,255,255,.70))";
                   }}
                 >
                   Login
                 </Link>
                 <Link
                   to="/register"
-                  className="px-5 py-2 text-sm font-bold text-white rounded-xl
+                  className="px-5 py-2 text-sm font-bold rounded-xl
                              transition-all hover:scale-105 active:scale-95"
                   style={{
-                    background: "linear-gradient(135deg,#6366f1,#8b5cf6)",
-                    boxShadow:  "0 4px 16px rgba(99,102,241,.35)",
+                    background: "var(--btn-primary-bg, linear-gradient(135deg,#6366f1,#8b5cf6))",
+                    boxShadow:  "var(--btn-primary-glow, 0 4px 16px rgba(99,102,241,.35))",
+                    color:      "var(--btn-primary-text, #ffffff)",
                   }}
                 >
                   Sign Up
@@ -786,9 +833,9 @@ const Navbar = () => {
               onClick={() => setMenuOpen((m) => !m)}
               className="lg:hidden p-2.5 rounded-xl transition-all hover:scale-105 active:scale-95"
               style={{
-                background: menuOpen ? "rgba(99,102,241,.18)"          : "rgba(255,255,255,.06)",
-                color:      menuOpen ? "#a5b4fc"                        : "rgba(255,255,255,.55)",
-                border:     menuOpen ? "1px solid rgba(99,102,241,.28)" : "1px solid rgba(255,255,255,.08)",
+                background: menuOpen ? "var(--nav-link-active-bg, rgba(99,102,241,.18))" : "var(--nav-btn-bg, rgba(255,255,255,.06))",
+                color:      menuOpen ? "var(--nav-link-active-icon, #a5b4fc)" : "var(--nav-btn-color, rgba(255,255,255,.70))",
+                border:     menuOpen ? "1px solid var(--nav-link-active-border, rgba(99,102,241,.28))" : "1px solid var(--nav-btn-border, rgba(255,255,255,.08))",
               }}
               aria-label="Toggle menu"
             >
@@ -833,7 +880,7 @@ const Navbar = () => {
               exit={{   opacity: 0, height: 0      }}
               transition={{ duration: 0.25, ease: "easeOut" }}
               className="lg:hidden overflow-hidden pb-4"
-              style={{ borderTop: "1px solid rgba(255,255,255,.07)" }}
+              style={{ borderTop: "1px solid var(--border-subtle, rgba(255,255,255,.07))" }}
             >
               <div className="flex flex-col gap-1 pt-3">
 
@@ -856,19 +903,19 @@ const Navbar = () => {
                         className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm
                                    font-medium transition-all"
                         style={{
-                          background: active ? "rgba(99,102,241,.15)"          : "transparent",
-                          color:      active ? "#a5b4fc"                        : "rgba(255,255,255,.55)",
-                          border:     active ? "1px solid rgba(99,102,241,.22)" : "1px solid transparent",
+                          background: active ? "var(--nav-link-active-bg, rgba(99,102,241,.15))" : "transparent",
+                          color:      active ? "var(--nav-link-active-color, #a5b4fc)" : "var(--nav-link-color, rgba(255,255,255,.55))",
+                          border:     active ? "1px solid var(--nav-link-active-border, rgba(99,102,241,.22))" : "1px solid transparent",
                         }}
                       >
-                        <span style={{ color: active ? "#a5b4fc" : "rgba(148,163,184,.40)" }}>
+                        <span style={{ color: active ? "var(--nav-link-active-icon, #a5b4fc)" : "currentColor", opacity: active ? 1 : 0.6 }}>
                           {icon}
                         </span>
                         {label}
                         {active && (
                           <span
                             className="ml-auto w-1.5 h-1.5 rounded-full"
-                            style={{ background: "#a5b4fc", boxShadow: "0 0 6px #a5b4fc" }}
+                            style={{ background: "var(--nav-link-active-icon, #a5b4fc)", boxShadow: "0 0 6px var(--nav-link-active-icon, #a5b4fc)" }}
                           />
                         )}
                       </Link>
@@ -881,22 +928,25 @@ const Navbar = () => {
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                     transition={{ delay: NAV_LINKS.length * 0.04 }}
                     className="flex gap-2 mt-2 pt-3"
-                    style={{ borderTop: "1px solid rgba(255,255,255,.07)" }}
+                    style={{ borderTop: "1px solid var(--border-subtle, rgba(255,255,255,.07))" }}
                   >
                     <Link to="/login"
                       className="flex-1 py-2.5 text-sm text-center font-medium rounded-xl
                                  transition-all hover:scale-105"
                       style={{
-                        color:      "rgba(255,255,255,.65)",
-                        background: "rgba(255,255,255,.06)",
-                        border:     "1px solid rgba(255,255,255,.10)",
+                        color:      "var(--nav-btn-color, rgba(255,255,255,.65))",
+                        background: "var(--nav-btn-bg, rgba(255,255,255,.06))",
+                        border:     "1px solid var(--nav-btn-border, rgba(255,255,255,.10))",
                       }}>
                       Login
                     </Link>
                     <Link to="/register"
-                      className="flex-1 py-2.5 text-sm text-center font-bold text-white
-                                 rounded-xl transition-all hover:scale-105"
-                      style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}>
+                      className="flex-1 py-2.5 text-sm text-center font-bold rounded-xl
+                                 transition-all hover:scale-105"
+                      style={{
+                        background: "var(--btn-primary-bg, linear-gradient(135deg,#6366f1,#8b5cf6))",
+                        color:      "var(--btn-primary-text, #ffffff)",
+                      }}>
                       Sign Up
                     </Link>
                   </motion.div>
@@ -907,16 +957,17 @@ const Navbar = () => {
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                     transition={{ delay: NAV_LINKS.length * 0.04 + 0.05 }}
                     className="mt-2 pt-3 flex items-center justify-between"
-                    style={{ borderTop: "1px solid rgba(255,255,255,.07)" }}
+                    style={{ borderTop: "1px solid var(--border-subtle, rgba(255,255,255,.07))" }}
                   >
                     <div className="flex items-center gap-3">
                       <UserAvatar user={user} size={36} radius={10} />
                       <div>
-                        <p className="text-white text-sm font-bold leading-tight">
+                        <p className="text-sm font-bold leading-tight"
+                           style={{ color: "var(--text-heading, #ffffff)" }}>
                           {user.username}
                         </p>
                         <p className="text-[10px] truncate max-w-[140px]"
-                           style={{ color: "rgba(148,163,184,.42)" }}>
+                           style={{ color: "var(--text-muted, rgba(148,163,184,.42))" }}>
                           {user.email}
                         </p>
                       </div>
@@ -927,7 +978,7 @@ const Navbar = () => {
                                  text-xs font-semibold transition-all hover:scale-105"
                       style={{
                         background: "rgba(239,68,68,.10)",
-                        color:      "#fca5a5",
+                        color:      "#ef4444",
                         border:     "1px solid rgba(239,68,68,.20)",
                       }}
                     >

@@ -1,5 +1,5 @@
-// App.jsx
 import { Routes, Route } from "react-router-dom";
+import { ThemeProvider }     from "./context/ThemeContext";
 import { AuthProvider }      from "./context/AuthContext";
 import { FavoritesProvider } from "./context/FavoritesContext";
 import Layout      from "./components/layout/Layout";
@@ -16,33 +16,35 @@ import Series      from "./pages/Series";
 import Kids        from "./pages/Kids";
 
 const App = () => (
-  <AuthProvider>
-    <FavoritesProvider>
-      <Layout>
-        <Routes>
-          {/* core */}
-          <Route path="/"          element={<Home />}        />
-          <Route path="/about"     element={<About />}       />
-          <Route path="/search"    element={<SearchPage />}  />
-          <Route path="/anime/:id" element={<AnimeDetail />} />
+  <ThemeProvider>
+    <AuthProvider>
+      <FavoritesProvider>
+        <Layout>
+          <Routes>
+            {/* core */}
+            <Route path="/"          element={<Home />}        />
+            <Route path="/about"     element={<About />}       />
+            <Route path="/search"    element={<SearchPage />}  />
+            <Route path="/anime/:id" element={<AnimeDetail />} />
 
-          {/* content pages */}
-          <Route path="/movies"    element={<Movies />}      />
-          <Route path="/series"    element={<Series />}      />
-          <Route path="/kids"      element={<Kids />}        />
+            {/* content pages */}
+            <Route path="/movies"    element={<Movies />}      />
+            <Route path="/series"    element={<Series />}      />
+            <Route path="/kids"      element={<Kids />}        />
 
-          {/* user */}
-          <Route path="/login"     element={<Login />}       />
-          <Route path="/register"  element={<Register />}    />
-          <Route path="/profile"   element={<Profile />}     />
-          <Route path="/favorites" element={<Favorites />}   />
+            {/* user */}
+            <Route path="/login"     element={<Login />}       />
+            <Route path="/register"  element={<Register />}    />
+            <Route path="/profile"   element={<Profile />}     />
+            <Route path="/favorites" element={<Favorites />}   />
 
-          {/* 404 fallback */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Layout>
-    </FavoritesProvider>
-  </AuthProvider>
+            {/* 404 fallback */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Layout>
+      </FavoritesProvider>
+    </AuthProvider>
+  </ThemeProvider>
 );
 
 /* ── inline 404 so no extra file needed ── */
@@ -52,8 +54,8 @@ import { Home as HomeIcon, Compass } from "lucide-react";
 
 const NotFound = () => (
   <div
-    className="min-h-screen flex flex-col items-center justify-center text-center px-4"
-    style={{ background: "#0a0a14" }}
+    className="min-h-screen flex flex-col items-center justify-center text-center px-4 transition-colors duration-300"
+    style={{ background: "var(--bg-main, #0a0a14)" }}
   >
     <motion.div
       initial={{ opacity: 0, y: 24 }}
@@ -76,11 +78,11 @@ const NotFound = () => (
       </div>
 
       <div>
-        <h1 className="font-black text-white mb-2"
-            style={{ fontSize: "clamp(20px,4vw,28px)" }}>
+        <h1 className="font-black mb-2"
+            style={{ fontSize: "clamp(20px,4vw,28px)", color: "var(--text-heading, #fff)" }}>
           Page Not Found
         </h1>
-        <p className="text-sm" style={{ color: "rgba(148,163,184,.50)", maxWidth: 340 }}>
+        <p className="text-sm" style={{ color: "var(--text-muted, rgba(148,163,184,.50))", maxWidth: 340 }}>
           This page doesn't exist or was moved. Head back home to keep exploring.
         </p>
       </div>
@@ -102,9 +104,9 @@ const NotFound = () => (
           className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-bold
                      transition-all hover:scale-105 active:scale-95"
           style={{
-            background: "rgba(255,255,255,.06)",
-            color:       "rgba(255,255,255,.70)",
-            border:      "1px solid rgba(255,255,255,.10)",
+            background: "var(--nav-btn-bg, rgba(255,255,255,.06))",
+            color:       "var(--text-heading, rgba(255,255,255,.70))",
+            border:      "1px solid var(--border-subtle, rgba(255,255,255,.10))",
           }}
         >
           <Compass size={14} /> Explore

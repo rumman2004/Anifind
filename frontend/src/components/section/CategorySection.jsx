@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight, RefreshCw, Layers } from "lucide-react";
 import { animeService } from "../../services/animeService";
-import AnimeCard from "./AnimeCard";
+import AnimeCard from "../anime/AnimeCard";
 
 /* ══════════════════════════════════════════════════════════
    FULL CATEGORY LIST  (matches image: all Jikan genres)
@@ -249,9 +249,13 @@ const CategoryRow = ({ category, visible, rowIndex }) => {
             <motion.div key="cards"
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }} transition={{ duration: 0.35 }}
-              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4"
+              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 lg:gap-5 items-stretch"
             >
-              {anime.map((a, i) => <AnimeCard key={a.mal_id} anime={a} index={i} />)}
+              {anime.map((a, i) => (
+                <div key={a.mal_id} className="h-full flex flex-col">
+                  <AnimeCard anime={a} index={i} />
+                </div>
+              ))}
             </motion.div>
           )}
         </AnimatePresence>
@@ -318,7 +322,7 @@ const CategorySection = () => {
 
   return (
     <section className="w-full py-10 sm:py-14">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-[1780px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16">
 
         {/* ── SECTION HEADER ── */}
         <motion.div

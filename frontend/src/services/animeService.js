@@ -54,14 +54,16 @@ class RequestQueue {
 
   async _handleError(err, job) {
     const status   = err?.response?.status;
+    const isNetworkError = !status && (err?.code === "ECONNABORTED" || err?.message?.includes("Network Error") || !err?.response);
     const canRetry =
-      (status === 429 || status >= 500) && job.retries < MAX_RETRIES;
+      (status === 429 || status >= 500 || (isNetworkError && job.retries < 2)) &&
+      job.retries < MAX_RETRIES;
 
     if (canRetry) {
       const delay = RETRY_BASE_MS * Math.pow(2, job.retries);
       job.retries++;
       console.warn(
-        `[Jikan] HTTP ${status} — retry ${job.retries}/${MAX_RETRIES} ` +
+        `[AnimeService] ${status ? `HTTP ${status}` : "Network Error"} — retry ${job.retries}/${MAX_RETRIES} ` +
         `for "${job.cacheKey}" in ${delay}ms`
       );
       await this._sleep(delay);

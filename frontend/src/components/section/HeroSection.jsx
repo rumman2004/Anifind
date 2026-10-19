@@ -142,8 +142,8 @@ const HeroSection = () => {
   /* ── loading ── */
   if (loading) return (
     <div
-      className="w-full flex flex-col items-center justify-center"
-      style={{ height: "100svh", background: "#0a0a14" }}
+      className="w-full flex flex-col items-center justify-center transition-colors duration-300"
+      style={{ height: "100svh", background: "var(--bg-main, #0a0a14)" }}
     >
       <motion.div
         animate={{ rotate: 360 }}
@@ -173,8 +173,8 @@ const HeroSection = () => {
 
   return (
     <section
-      className="relative w-full overflow-hidden"
-      style={{ height: "100svh", minHeight: 500, background: "#0a0a14" }}
+      className="relative w-full overflow-hidden hero-section transition-colors duration-300"
+      style={{ height: "100svh", minHeight: 500, background: "var(--bg-main, #0a0a14)" }}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
@@ -212,17 +212,17 @@ const HeroSection = () => {
         {/* Left fade — where text sits */}
         <div style={{
           position: "absolute", inset: 0,
-          background: "linear-gradient(to right, rgba(10,10,20,.96) 0%, rgba(10,10,20,.70) 35%, rgba(10,10,20,.15) 60%, transparent 100%)",
+          background: "var(--hero-fade-left)",
         }} />
         {/* Bottom fade — for shelf */}
         <div style={{
           position: "absolute", inset: 0,
-          background: "linear-gradient(to top, rgba(10,10,20,1) 0%, rgba(10,10,20,.85) 18%, rgba(10,10,20,.3) 35%, transparent 60%)",
+          background: "var(--hero-fade-bottom)",
         }} />
         {/* Top fade — for nav */}
         <div style={{
           position: "absolute", inset: 0,
-          background: "linear-gradient(to bottom, rgba(10,10,20,.6) 0%, transparent 25%)",
+          background: "var(--hero-fade-top)",
         }} />
       </div>
 

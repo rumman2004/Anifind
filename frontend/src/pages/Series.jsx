@@ -1,705 +1,279 @@
-// Series.jsx
-import { useState, useEffect, useCallback, useRef } from "react";
+// src/pages/Series.jsx
+import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
-  Tv, Star, ChevronRight, RefreshCw, SlidersHorizontal,
-  LayoutGrid, LayoutList, Flame, Sparkles, Calendar,
-  Radio,
+  Tv, Star, ChevronRight, RefreshCw, SlidersHorizontal, LayoutGrid, LayoutList,
+  Flame, Sparkles, Calendar, Radio, X,
 } from "lucide-react";
 import { animeService } from "../services/animeService";
-import AnimeCard from "../components/section/AnimeCard";
+import AnimeCard from "../components/anime/AnimeCard";
+import ScrollRope from "../components/ui/ScrollRope";
 
-/* ══════════════════════════════════════════════════════════
-   CONSTANTS
-══════════════════════════════════════════════════════════ */
-const SERIES_FILTERS = [
-  { key: "all",      label: "All Series", icon: <Tv size={13} />,      params: { type: "TV", order_by: "popularity", sort: "desc" } },
-  { key: "top",      label: "Top Rated",  icon: <Star size={13} />,     params: { type: "TV", order_by: "score",      sort: "desc" } },
-  { key: "airing",   label: "Now Airing", icon: <Radio size={13} />,    params: { type: "TV", status: "airing",      order_by: "score", sort: "desc" } },
-  { key: "trending", label: "Trending",   icon: <Flame size={13} />,    params: { type: "TV", order_by: "members",   sort: "desc" } },
-  { key: "upcoming", label: "Upcoming",   icon: <Calendar size={13} />, params: { type: "TV", status: "upcoming",    order_by: "start_date" } },
-  { key: "ova",      label: "OVA / ONA",  icon: <Sparkles size={13} />, params: { order_by: "score", sort: "desc" } },
+const ACCENT = "#a5b4fc";
+const PAGE_SIZE = 24;
+
+const TABS = [
+  { key: "all",      label: "All",      icon: Tv,        params: { type: "TV", order_by: "popularity", sort: "desc" } },
+  { key: "top",      label: "Top Rated",icon: Star,       params: { type: "TV", order_by: "score", sort: "desc" } },
+  { key: "airing",   label: "Airing",   icon: Radio,      params: { type: "TV", status: "airing", order_by: "score", sort: "desc" } },
+  { key: "trending", label: "Trending", icon: Flame,      params: { type: "TV", order_by: "members", sort: "desc" } },
+  { key: "upcoming", label: "Upcoming", icon: Calendar,   params: { type: "TV", status: "upcoming", order_by: "start_date", sort: "asc" } },
+  { key: "ova",      label: "OVA / ONA",icon: Sparkles,   params: { order_by: "score", sort: "desc" } },
 ];
+const SORTS = [["Popularity","popularity"],["Score","score"],["Newest","start_date"],["Episodes","episodes"],["Title","title"]];
+const SCORES = ["9","8","7","6"];
+const SEASONS = [["Any",""],["Winter","winter"],["Spring","spring"],["Summer","summer"],["Fall","fall"]];
+const DEFAULTS = { sort: "popularity", score: "", season: "" };
 
-const SORT_OPTIONS = [
-  { label: "Popularity", value: "popularity" },
-  { label: "Score",      value: "score"      },
-  { label: "Newest",     value: "start_date" },
-  { label: "Episodes",   value: "episodes"   },
-  { label: "Title",      value: "title"      },
-];
-
-const SCORE_FILTERS = ["9+", "8+", "7+", "6+"];
-
-const SEASON_OPTIONS = [
-  { label: "Any",    value: "" },
-  { label: "Winter", value: "winter" },
-  { label: "Spring", value: "spring" },
-  { label: "Summer", value: "summer" },
-  { label: "Fall",   value: "fall"   },
-];
-
-/* default filter values — single source of truth */
-const DEFAULT_SORT     = "popularity";
-const DEFAULT_SCORE    = "";
-const DEFAULT_SEASON   = "";
-
-/* ══════════════════════════════════════════════════════════
-   CARD SKELETON
-══════════════════════════════════════════════════════════ */
-const CardSkeleton = ({ index }) => (
-  <motion.div
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    transition={{ delay: index * 0.03 }}
-    className="flex flex-col gap-2.5"
-  >
-    <div
-      className="w-full rounded-2xl animate-pulse"
-      style={{ aspectRatio: "2/3", background: "rgba(255,255,255,.06)" }}
-    />
-    <div className="space-y-1.5 px-0.5">
-      <div className="h-2.5 rounded-full animate-pulse"
-           style={{ width: "80%", background: "rgba(255,255,255,.05)" }} />
-      <div className="h-2 rounded-full animate-pulse"
-           style={{ width: "55%", background: "rgba(255,255,255,.04)" }} />
-    </div>
-  </motion.div>
-);
-
-/* ══════════════════════════════════════════════════════════
-   LIST ROW
-══════════════════════════════════════════════════════════ */
-const ListRow = ({ anime, index }) => {
-  const [hov, setHov] = useState(false);
-  const img   = anime.images?.jpg?.large_image_url || anime.images?.jpg?.image_url;
-  const title = anime.title_english || anime.title;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: Math.min(index * 0.025, 0.5) }}
-    >
-      <Link
-        to={`/anime/${anime.mal_id}`}
-        onMouseEnter={() => setHov(true)}
-        onMouseLeave={() => setHov(false)}
-        className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-2xl transition-all duration-200"
-        style={{
-          background: hov ? "rgba(255,255,255,.06)" : "rgba(255,255,255,.03)",
-          border:     `1px solid ${hov ? "rgba(99,102,241,.28)" : "rgba(255,255,255,.07)"}`,
-          transform:  hov ? "scale(1.008)" : "scale(1)",
-        }}
-      >
-        {/* rank */}
-        <span
-          className="flex-shrink-0 font-black text-center w-7"
-          style={{
-            fontSize: 11,
-            color:
-              index === 0 ? "#fbbf24" :
-              index === 1 ? "#94a3b8" :
-              index === 2 ? "#fb923c" :
-              "rgba(148,163,184,.28)",
-          }}
-        >
-          {index < 3 ? ["🥇","🥈","🥉"][index] : index + 1}
-        </span>
-
-        {/* thumbnail */}
-        <div
-          className="flex-shrink-0 rounded-xl overflow-hidden"
-          style={{ width: 46, height: 62, border: "1px solid rgba(255,255,255,.08)" }}
-        >
-          <img
-            src={img}
-            alt={title}
-            className="w-full h-full object-cover"
-            style={{ transform: hov ? "scale(1.08)" : "scale(1)", transition: "transform .4s" }}
-          />
-        </div>
-
-        {/* info */}
-        <div className="flex-1 min-w-0">
-          <p
-            className="font-bold line-clamp-1 transition-colors duration-200"
-            style={{ fontSize: "clamp(12px,2vw,14px)", color: hov ? "#a5b4fc" : "#fff" }}
-          >
-            {title}
-          </p>
-          <div className="flex items-center gap-2 mt-1 flex-wrap">
-            {anime.episodes && (
-              <span className="text-[10px]" style={{ color: "rgba(148,163,184,.42)" }}>
-                {anime.episodes} eps
-              </span>
-            )}
-            {anime.status === "Currently Airing" && (
-              <span
-                className="flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full"
-                style={{
-                  background: "rgba(74,222,128,.12)",
-                  color:       "#4ade80",
-                  border:      "1px solid rgba(74,222,128,.22)",
-                }}
-              >
-                <span
-                  className="w-1.5 h-1.5 rounded-full bg-green-400"
-                  style={{ boxShadow: "0 0 4px #4ade80" }}
-                />
-                Airing
-              </span>
-            )}
-            {anime.genres?.slice(0, 2).map(g => (
-              <span
-                key={g.mal_id}
-                className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md"
-                style={{
-                  background: "rgba(99,102,241,.10)",
-                  border:     "1px solid rgba(99,102,241,.18)",
-                  color:      "rgba(165,180,252,.65)",
-                }}
-              >
-                {g.name}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* score */}
-        {anime.score && (
-          <div className="flex-shrink-0 flex items-center gap-1">
-            <Star size={10} style={{ color: "#fbbf24", fill: "#fbbf24" }} />
-            <span className="font-black text-white" style={{ fontSize: 12 }}>
-              {anime.score.toFixed(1)}
-            </span>
-          </div>
-        )}
-      </Link>
-    </motion.div>
-  );
-};
-
-/* ══════════════════════════════════════════════════════════
-   CHIP
-══════════════════════════════════════════════════════════ */
 const Chip = ({ active, onClick, children }) => (
-  <button
-    onClick={onClick}
-    className="px-3 py-1.5 rounded-xl text-xs font-semibold transition-all
-               hover:scale-105 active:scale-95 whitespace-nowrap"
+  <button onClick={onClick} aria-pressed={active}
+    className="px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-400"
     style={{
-      background: active ? "rgba(99,102,241,.22)"          : "rgba(255,255,255,.05)",
-      border:     active ? "1px solid rgba(99,102,241,.40)" : "1px solid rgba(255,255,255,.08)",
-      color:      active ? "#a5b4fc"                        : "rgba(255,255,255,.52)",
-    }}
-  >
+      background: active ? "var(--nav-link-active-bg, rgba(165,180,252,.16))" : "var(--nav-btn-bg, rgba(255,255,255,.04))",
+      border: `1px solid ${active ? "var(--border-accent, rgba(165,180,252,.5))" : "var(--border-subtle, rgba(255,255,255,.08))"}`,
+      color: active ? "var(--color-primary, #a5b4fc)" : "var(--text-muted, rgba(255,255,255,.65))",
+    }}>
     {children}
   </button>
 );
 
-/* ══════════════════════════════════════════════════════════
-   SERIES PAGE
-══════════════════════════════════════════════════════════ */
+const Skeleton = () => (
+  <div className="space-y-2">
+    <div className="w-full rounded-xl animate-pulse" style={{ aspectRatio: "2/3", background: "var(--border-subtle, rgba(255,255,255,.05))" }} />
+    <div className="h-2.5 w-4/5 rounded-full animate-pulse" style={{ background: "var(--border-subtle, rgba(255,255,255,.05))" }} />
+    <div className="h-2 w-1/2 rounded-full animate-pulse" style={{ background: "var(--border-subtle, rgba(255,255,255,.03))" }} />
+  </div>
+);
+
+const ListRow = ({ anime, index }) => {
+  const img = anime.images?.jpg?.large_image_url || anime.images?.jpg?.image_url;
+  const title = anime.title_english || anime.title;
+  return (
+    <Link to={`/anime/${anime.mal_id}`}
+      className="group flex items-center gap-4 p-3 rounded-xl transition-colors hover:bg-white/[.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-400"
+      style={{ background: "var(--bg-card, rgba(255,255,255,.025))", border: "1px solid var(--border-subtle, rgba(255,255,255,.06))" }}>
+      <span className="w-8 text-center text-xs font-bold tabular-nums" style={{ color: index < 3 ? "var(--color-primary, #a5b4fc)" : "var(--text-subtle, rgba(255,255,255,.3))" }}>{index + 1}</span>
+      <img src={img} alt="" loading="lazy" className="w-12 h-16 rounded-lg object-cover flex-shrink-0" />
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold text-sm sm:text-[15px] truncate transition-colors" style={{ color: "var(--text-heading, #fff)" }}>{title}</p>
+        <div className="flex items-center gap-3 mt-1 text-[11px] flex-wrap" style={{ color: "var(--text-muted, #94a3b8)" }}>
+          {anime.episodes && <span>{anime.episodes} eps</span>}
+          {anime.status === "Currently Airing" && (
+            <span className="inline-flex items-center gap-1 font-bold text-emerald-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" style={{ boxShadow: "0 0 4px #4ade80" }} />Airing
+            </span>
+          )}
+          {anime.genres?.slice(0, 2).map((g) => <span key={g.mal_id} style={{ color: "var(--color-primary, #a5b4fc)", opacity: 0.8 }}>{g.name}</span>)}
+        </div>
+      </div>
+      {anime.score && (
+        <span className="inline-flex items-center gap-1 text-sm font-bold tabular-nums" style={{ color: "var(--text-heading, #fff)" }}>
+          <Star size={12} fill="#fbbf24" stroke="#fbbf24" />{anime.score.toFixed(1)}
+        </span>
+      )}
+    </Link>
+  );
+};
+
+const GRID = "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-4";
+
 const Series = () => {
-  const [activeFilter, setActiveFilter] = useState("all");
-  const [series,       setSeries]       = useState([]);
-  const [loading,      setLoading]      = useState(true);
-  const [error,        setError]        = useState(false);
-  const [viewMode,     setViewMode]     = useState("grid");
-  const [showPanel,    setShowPanel]    = useState(false);
-  const [sortBy,       setSortBy]       = useState(DEFAULT_SORT);
-  const [minScore,     setMinScore]     = useState(DEFAULT_SCORE);
-  const [season,       setSeason]       = useState(DEFAULT_SEASON);
-  const [page,         setPage]         = useState(1);
-  const [hasMore,      setHasMore]      = useState(true);
-  const [loadingMore,  setLoadingMore]  = useState(false);
+  const [tab, setTab] = useState("all");
+  const [f, setF] = useState(DEFAULTS);
+  const [series, setSeries] = useState([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState(false);
+  const [view, setView] = useState("grid");
+  const [panel, setPanel] = useState(false);
+  const reqId = useRef(0);
 
-  /*
-   * useRef stores the "committed" filter values that fetchSeries should
-   * actually use. This lets handleFilterChange write reset values into the
-   * ref synchronously before calling fetchSeries, so the fetch never reads
-   * stale state from a previous render's closure.
-   */
-  const filterRef = useRef({ sortBy: DEFAULT_SORT, minScore: DEFAULT_SCORE, season: DEFAULT_SEASON });
+  const changed = useMemo(() => Object.keys(DEFAULTS).filter((k) => f[k] !== DEFAULTS[k]).length, [f]);
 
-  /* ── core fetch ── */
-  const fetchSeries = useCallback(async (pg = 1, append = false) => {
-    pg === 1 ? setLoading(true) : setLoadingMore(true);
+  const load = async (pg, append) => {
+    const id = ++reqId.current;
+    append ? setLoadingMore(true) : setLoading(true);
     setError(false);
-
-    /* always read from the ref so we get the values that were committed
-       at the time this fetch was triggered, not React's batched state */
-    const { sortBy: sb, minScore: ms, season: sn } = filterRef.current;
-
     try {
-      /* OVA / ONA — merged and sorted by score */
-      if (activeFilter === "ova") {
-        const [ovaData, onaData] = await Promise.all([
+      if (tab === "ova") {
+        const [ovaRes, onaRes] = await Promise.all([
           animeService.searchAnime("", { type: "OVA", order_by: "score", sort: "desc", limit: 12, page: pg }),
           animeService.searchAnime("", { type: "ONA", order_by: "score", sort: "desc", limit: 12, page: pg }),
         ]);
-        const merged = [
-          ...(ovaData.data ?? []),
-          ...(onaData.data ?? []),
-        ].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+        if (id !== reqId.current) return;
+        const merged = [...(ovaRes.data ?? []), ...(onaRes.data ?? [])].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
         setHasMore(merged.length >= 20);
-        setSeries(prev => append ? [...prev, ...merged] : merged);
+        setSeries((p) => (append ? [...p, ...merged] : merged));
+        setPage(pg);
         return;
       }
-
-      const base   = SERIES_FILTERS.find(f => f.key === activeFilter)?.params ?? {};
+      const base = TABS.find((t) => t.key === tab).params;
       const params = {
-        ...base,
-        limit: 24,
-        page:  pg,
-        ...(sb ? { order_by: sb }    : {}),
-        ...(ms ? { min_score: ms }   : {}),
-        ...(sn ? { season: sn }      : {}),
+        ...base, limit: PAGE_SIZE, page: pg,
+        ...(f.sort && { order_by: f.sort }),
+        ...(f.score && { min_score: f.score }),
+        ...(f.season && { season: f.season }),
       };
-
-      const data  = await animeService.searchAnime("", params);
-      const items = data.data ?? [];
-      setHasMore(items.length === 24);
-      setSeries(prev => append ? [...prev, ...items] : items);
+      const res = await animeService.searchAnime("", params);
+      if (id !== reqId.current) return;
+      const items = res.data ?? [];
+      setHasMore(items.length === PAGE_SIZE);
+      setSeries((p) => (append ? [...p, ...items] : items));
+      setPage(pg);
     } catch {
-      setError(true);
+      if (id === reqId.current) setError(true);
     } finally {
-      setLoading(false);
-      setLoadingMore(false);
+      if (id === reqId.current) { setLoading(false); setLoadingMore(false); }
     }
-  }, [activeFilter]); // only activeFilter — filter values come from the ref
-
-  /* ── re-fetch whenever the committed filter values or active tab changes ── */
-  useEffect(() => {
-    setPage(1);
-    setSeries([]);
-    fetchSeries(1, false);
-  }, [fetchSeries]);
-
-  /* ── also re-fetch when sortBy / minScore / season change via the panel ──
-     We update the ref first so fetchSeries reads fresh values              */
-  useEffect(() => {
-    filterRef.current = { sortBy, minScore, season };
-    setPage(1);
-    setSeries([]);
-    fetchSeries(1, false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sortBy, minScore, season]);
-
-  /* ── tab change: reset all filters synchronously via the ref ── */
-  const handleFilterChange = (key) => {
-    if (key === activeFilter) return; // no-op if same tab
-
-    /* 1. commit reset values to the ref immediately */
-    filterRef.current = {
-      sortBy:   DEFAULT_SORT,
-      minScore: DEFAULT_SCORE,
-      season:   DEFAULT_SEASON,
-    };
-
-    /* 2. update React state (these trigger re-renders but fetchSeries
-          will use the ref, not stale state)                          */
-    setSortBy(DEFAULT_SORT);
-    setMinScore(DEFAULT_SCORE);
-    setSeason(DEFAULT_SEASON);
-    setShowPanel(false);
-    setPage(1);
-    setSeries([]);
-    setActiveFilter(key); // this triggers fetchSeries via useEffect → [fetchSeries]
   };
 
-  /* ── load more ── */
-  const loadMore = () => {
-    const next = page + 1;
-    setPage(next);
-    fetchSeries(next, true);
-  };
+  useEffect(() => { load(1, false); /* eslint-disable-next-line */ }, [tab, f]);
 
-  /* ── active filter label for empty state ── */
-  const activeLabel = SERIES_FILTERS.find(f => f.key === activeFilter)?.label ?? "Series";
+  const switchTab = (k) => { if (k !== tab) { setF(DEFAULTS); setPanel(false); setTab(k); } };
+  const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
+  const tabLabel = TABS.find((t) => t.key === tab).label;
 
-  /* ══════════════════════════════════════════════════════
-     RENDER
-  ══════════════════════════════════════════════════════ */
   return (
-    <div className="min-h-screen" style={{ background: "#0a0a14" }}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+    <div className="min-h-screen w-full" style={{ background: "var(--bg-main, #0a0a14)" }}>
+      <ScrollRope color={ACCENT} />
 
-        {/* ════ HERO ════ */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-3xl mb-8 sm:mb-12 p-6 sm:p-10"
-          style={{
-            background: "linear-gradient(135deg,rgba(99,102,241,.12),rgba(168,85,247,.06),rgba(10,10,20,0))",
-            border:     "1px solid rgba(99,102,241,.18)",
-          }}
-        >
-          <div
-            className="absolute -top-16 -right-16 w-64 h-64 rounded-full pointer-events-none"
-            style={{ background: "rgba(99,102,241,.06)", filter: "blur(60px)" }}
-          />
-          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-4">
-            {/* icon */}
-            <div
-              className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center flex-shrink-0"
-              style={{
-                background: "linear-gradient(135deg,rgba(99,102,241,.25),rgba(99,102,241,.10))",
-                border:     "1px solid rgba(99,102,241,.35)",
-                boxShadow:  "0 0 32px rgba(99,102,241,.20)",
-              }}
-            >
-              <Tv size={28} style={{ color: "#a5b4fc" }} />
-            </div>
+      <header className="w-full border-b" style={{ borderColor: "var(--border-subtle, rgba(255,255,255,.05))", background: "linear-gradient(180deg,rgba(99,102,241,.06),transparent)" }}>
+        <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-8 xl:px-14 py-8 sm:py-12 flex flex-col sm:flex-row sm:items-end justify-between gap-5">
+          <div>
+            <h1 className="font-extrabold tracking-tight" style={{ fontSize: "clamp(28px,4.5vw,48px)", lineHeight: 1.05, color: "var(--text-heading, #fff)" }}>Anime Series</h1>
+            <p className="mt-2 text-sm sm:text-base max-w-xl" style={{ color: "var(--text-muted, #94a3b8)" }}>
+              TV series, OVAs and ONAs — from long-running classics to this season's new releases.
+            </p>
+          </div>
+          <div className="hidden sm:flex p-1 rounded-xl gap-1" style={{ background: "var(--nav-btn-bg, rgba(255,255,255,.05))", border: "1px solid var(--border-subtle, rgba(255,255,255,.1))" }} role="group" aria-label="Layout">
+            {[["grid", LayoutGrid], ["list", LayoutList]].map(([k, I]) => (
+              <button key={k} onClick={() => setView(k)} aria-label={`${k} view`} aria-pressed={view === k}
+                className="w-9 h-9 rounded-lg grid place-items-center transition-colors"
+                style={{ background: view === k ? "rgba(165,180,252,.2)" : "transparent", color: view === k ? ACCENT : "var(--text-muted, rgba(255,255,255,.4))" }}>
+                <I size={15} />
+              </button>
+            ))}
+          </div>
+        </div>
+      </header>
 
-            {/* text */}
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <h1
-                  className="font-black text-white"
-                  style={{ fontSize: "clamp(24px,5vw,40px)", letterSpacing: "-0.03em" }}
-                >
-                  Anime Series
-                </h1>
-                <span
-                  className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full"
+      <div className="sticky top-0 z-30 w-full backdrop-blur-xl border-b" style={{ background: "var(--nav-bg, rgba(10,10,20,.85))", borderColor: "var(--border-subtle, rgba(255,255,255,.05))" }}>
+        <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-8 xl:px-14 py-3 flex items-center gap-3">
+          <nav className="flex-1 flex gap-2 overflow-x-auto" style={{ scrollbarWidth: "none" }} aria-label="Series categories">
+            {TABS.map(({ key, label, icon: I }) => {
+              const on = tab === key;
+              return (
+                <button key={key} onClick={() => switchTab(key)} aria-current={on}
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs sm:text-[13px] font-semibold whitespace-nowrap transition-colors"
                   style={{
-                    background: "rgba(74,222,128,.16)",
-                    color:       "#4ade80",
-                    border:      "1px solid rgba(74,222,128,.28)",
-                  }}
-                >
-                  Live
-                </span>
+                    background: on ? "var(--nav-link-active-bg, rgba(165,180,252,.16))" : "transparent",
+                    color: on ? ACCENT : "var(--text-muted, rgba(255,255,255,.55))",
+                    border: `1px solid ${on ? "var(--border-accent, rgba(165,180,252,.45))" : "transparent"}`,
+                  }}>
+                  <I size={13} />{label}
+                </button>
+              );
+            })}
+          </nav>
+          <button onClick={() => setPanel((p) => !p)} aria-expanded={panel}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-[13px] font-semibold border transition-colors"
+            style={{
+              background: panel ? "var(--nav-link-active-bg, rgba(165,180,252,.16))" : "var(--nav-btn-bg, rgba(255,255,255,.04))",
+              borderColor: panel ? "var(--border-accent, rgba(165,180,252,.45))" : "var(--border-subtle, rgba(255,255,255,.1))",
+              color: panel ? ACCENT : "var(--text-muted, rgba(255,255,255,.7))",
+            }}>
+            <SlidersHorizontal size={13} /> Filters
+            {changed > 0 && <span className="w-4 h-4 rounded-full text-[10px] font-bold grid place-items-center text-black" style={{ background: ACCENT }}>{changed}</span>}
+          </button>
+        </div>
+
+        <AnimatePresence>
+          {panel && (
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }} className="overflow-hidden border-t" style={{ borderColor: "var(--border-subtle, rgba(255,255,255,.05))" }}>
+              <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-8 xl:px-14 py-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_auto] items-start">
+                <fieldset><legend className="text-xs mb-2" style={{ color: "var(--text-muted, #94a3b8)" }}>Sort by</legend>
+                  <div className="flex flex-wrap gap-1.5">{SORTS.map(([l, v]) => <Chip key={v} active={f.sort === v} onClick={() => set("sort", v)}>{l}</Chip>)}</div>
+                </fieldset>
+                <fieldset><legend className="text-xs mb-2" style={{ color: "var(--text-muted, #94a3b8)" }}>Minimum score</legend>
+                  <div className="flex flex-wrap gap-1.5">{SCORES.map((s) => <Chip key={s} active={f.score === s} onClick={() => set("score", f.score === s ? "" : s)}>{s}+</Chip>)}</div>
+                </fieldset>
+                {tab !== "ova" && (
+                  <fieldset><legend className="text-xs mb-2" style={{ color: "var(--text-muted, #94a3b8)" }}>Season</legend>
+                    <div className="flex flex-wrap gap-1.5">{SEASONS.map(([l, v]) => <Chip key={v} active={f.season === v} onClick={() => set("season", v)}>{l}</Chip>)}</div>
+                  </fieldset>
+                )}
+                {changed > 0 && (
+                  <button onClick={() => setF(DEFAULTS)} className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-300 hover:text-rose-200 self-end">
+                    <X size={12} /> Reset filters
+                  </button>
+                )}
               </div>
-              <p className="text-sm" style={{ color: "rgba(148,163,184,.55)" }}>
-                Dive into thousands of TV series, OVAs, and ONAs — from legendary long-runners to seasonal gems.
-              </p>
-            </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
-            {/* view toggle */}
-            <div
-              className="hidden sm:flex items-center p-1 rounded-xl gap-0.5"
-              style={{ background: "rgba(255,255,255,.05)", border: "1px solid rgba(255,255,255,.08)" }}
-            >
-              {[{ k: "grid", I: LayoutGrid }, { k: "list", I: LayoutList }].map(({ k, I }) => (
-                <button
-                  key={k}
-                  onClick={() => setViewMode(k)}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
-                  style={{
-                    background: viewMode === k ? "rgba(99,102,241,.28)"          : "transparent",
-                    color:      viewMode === k ? "#a5b4fc"                        : "rgba(255,255,255,.30)",
-                    border:     viewMode === k ? "1px solid rgba(99,102,241,.28)" : "1px solid transparent",
-                  }}
-                >
-                  <I size={13} />
+      <main className="w-full max-w-[1920px] mx-auto px-4 sm:px-8 xl:px-14 py-6 sm:py-8">
+        {!loading && !error && series.length > 0 && (
+          <div className="flex items-center justify-between mb-5">
+            <p className="text-sm" style={{ color: "var(--text-muted, #94a3b8)" }}><span className="font-bold tabular-nums" style={{ color: "var(--text-heading, #fff)" }}>{series.length}</span> {tabLabel.toLowerCase()} series</p>
+            <div className="sm:hidden flex p-1 rounded-lg gap-1" style={{ background: "var(--nav-btn-bg, rgba(255,255,255,.05))", border: "1px solid var(--border-subtle, rgba(255,255,255,.1))" }}>
+              {[["grid", LayoutGrid], ["list", LayoutList]].map(([k, I]) => (
+                <button key={k} onClick={() => setView(k)} aria-label={`${k} view`}
+                  className="w-8 h-8 rounded-md grid place-items-center"
+                  style={{ background: view === k ? "rgba(165,180,252,.2)" : "transparent", color: view === k ? ACCENT : "var(--text-muted, rgba(255,255,255,.4))" }}>
+                  <I size={14} />
                 </button>
               ))}
             </div>
           </div>
-        </motion.div>
+        )}
 
-        {/* ════ FILTER TABS ════ */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8"
-        >
-          <div
-            className="flex items-center gap-2 overflow-x-auto pb-1 flex-1"
-            style={{ scrollbarWidth: "none" }}
-          >
-            {SERIES_FILTERS.map(f => (
-              <button
-                key={f.key}
-                onClick={() => handleFilterChange(f.key)}   // ← fixed
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold
-                           whitespace-nowrap transition-all hover:scale-105 active:scale-95 flex-shrink-0"
-                style={{
-                  background: activeFilter === f.key ? "rgba(99,102,241,.22)"          : "rgba(255,255,255,.05)",
-                  border:     activeFilter === f.key ? "1px solid rgba(99,102,241,.40)" : "1px solid rgba(255,255,255,.08)",
-                  color:      activeFilter === f.key ? "#a5b4fc"                        : "rgba(255,255,255,.50)",
-                }}
-              >
-                {f.icon} {f.label}
-              </button>
-            ))}
+        {loading && <div className={GRID}>{Array.from({ length: PAGE_SIZE }).map((_, i) => <Skeleton key={i} />)}</div>}
+
+        {error && !loading && (
+          <div className="py-24 text-center">
+            <p className="text-lg font-bold text-white">Couldn't load series</p>
+            <p className="text-sm text-slate-400 mt-1">Check your connection, then try again.</p>
+            <button onClick={() => load(1, false)} className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold text-black" style={{ background: ACCENT }}>
+              <RefreshCw size={14} /> Retry
+            </button>
           </div>
+        )}
 
-          {/* filters toggle */}
-          <button
-            onClick={() => setShowPanel(p => !p)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold
-                       transition-all hover:scale-105 active:scale-95 flex-shrink-0 self-start"
-            style={{
-              background: showPanel ? "rgba(99,102,241,.18)"          : "rgba(255,255,255,.05)",
-              border:     showPanel ? "1px solid rgba(99,102,241,.35)" : "1px solid rgba(255,255,255,.08)",
-              color:      showPanel ? "#a5b4fc"                        : "rgba(255,255,255,.55)",
-            }}
-          >
-            <SlidersHorizontal size={13} />
-            Filters
-            {/* active filter count badge */}
-            {(sortBy !== DEFAULT_SORT || minScore !== DEFAULT_SCORE || season !== DEFAULT_SEASON) && (
-              <span
-                className="flex items-center justify-center w-4 h-4 rounded-full text-[9px] font-black"
-                style={{ background: "#6366f1", color: "#fff" }}
-              >
-                {[sortBy !== DEFAULT_SORT, minScore !== DEFAULT_SCORE, season !== DEFAULT_SEASON]
-                  .filter(Boolean).length}
-              </span>
+        {!loading && !error && series.length === 0 && (
+          <div className="py-24 text-center">
+            <p className="text-lg font-bold text-white">No {tabLabel.toLowerCase()} series match</p>
+            <p className="text-sm text-slate-400 mt-1">Loosen the filters or pick another category.</p>
+            {changed > 0 && <button onClick={() => setF(DEFAULTS)} className="mt-5 px-5 py-2.5 rounded-lg text-sm font-semibold text-black" style={{ background: ACCENT }}>Clear filters</button>}
+          </div>
+        )}
+
+        {!loading && !error && series.length > 0 && (
+          <>
+            {view === "grid" ? (
+              <div className={GRID}>{series.map((s, i) => <AnimeCard key={`${s.mal_id}-${i}`} anime={s} index={i % PAGE_SIZE} />)}</div>
+            ) : (
+              <div className="grid gap-2 xl:grid-cols-2">{series.map((s, i) => <ListRow key={`${s.mal_id}-${i}`} anime={s} index={i} />)}</div>
             )}
-          </button>
-        </motion.div>
-
-        {/* ════ FILTER PANEL ════ */}
-        <AnimatePresence>
-          {showPanel && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{   opacity: 0, height: 0      }}
-              transition={{ duration: 0.25 }}
-              className="overflow-hidden mb-6"
-            >
-              <div
-                className="p-4 sm:p-5 rounded-2xl flex flex-wrap gap-6"
-                style={{ background: "rgba(255,255,255,.03)", border: "1px solid rgba(255,255,255,.07)" }}
-              >
-                {/* sort */}
-                <div>
-                  <p className="text-[9px] uppercase tracking-widest font-bold mb-2"
-                     style={{ color: "rgba(148,163,184,.42)" }}>
-                    Sort By
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {SORT_OPTIONS.map(o => (
-                      <Chip
-                        key={o.value}
-                        active={sortBy === o.value}
-                        onClick={() => setSortBy(o.value)}
-                      >
-                        {o.label}
-                      </Chip>
-                    ))}
-                  </div>
-                </div>
-
-                {/* min score */}
-                <div>
-                  <p className="text-[9px] uppercase tracking-widest font-bold mb-2"
-                     style={{ color: "rgba(148,163,184,.42)" }}>
-                    Min Score
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {SCORE_FILTERS.map(s => {
-                      const val = s.replace("+", "");
-                      return (
-                        <Chip
-                          key={s}
-                          active={minScore === val}
-                          onClick={() => setMinScore(p => p === val ? DEFAULT_SCORE : val)}
-                        >
-                          ⭐ {s}
-                        </Chip>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* season — hidden for OVA tab since season doesn't apply */}
-                {activeFilter !== "ova" && (
-                  <div>
-                    <p className="text-[9px] uppercase tracking-widest font-bold mb-2"
-                       style={{ color: "rgba(148,163,184,.42)" }}>
-                      Season
-                    </p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {SEASON_OPTIONS.map(o => (
-                        <Chip
-                          key={o.value}
-                          active={season === o.value}
-                          onClick={() => setSeason(o.value)}
-                        >
-                          {o.label}
-                        </Chip>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* reset all filters button */}
-                {(sortBy !== DEFAULT_SORT || minScore !== DEFAULT_SCORE || season !== DEFAULT_SEASON) && (
-                  <div className="w-full flex items-center pt-1"
-                       style={{ borderTop: "1px solid rgba(255,255,255,.06)" }}>
-                    <button
-                      onClick={() => {
-                        filterRef.current = { sortBy: DEFAULT_SORT, minScore: DEFAULT_SCORE, season: DEFAULT_SEASON };
-                        setSortBy(DEFAULT_SORT);
-                        setMinScore(DEFAULT_SCORE);
-                        setSeason(DEFAULT_SEASON);
-                      }}
-                      className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl
-                                 transition-all hover:scale-105"
-                      style={{
-                        background: "rgba(239,68,68,.10)",
-                        border:     "1px solid rgba(239,68,68,.20)",
-                        color:      "rgba(252,165,165,.80)",
-                      }}
-                    >
-                      <RefreshCw size={11} /> Reset Filters
-                    </button>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* ════ CONTENT ════ */}
-        <AnimatePresence mode="wait">
-
-          {/* loading skeletons */}
-          {loading && (
-            <motion.div
-              key="loading"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{   opacity: 0 }}
-              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4"
-            >
-              {Array.from({ length: 24 }).map((_, i) => <CardSkeleton key={i} index={i} />)}
-            </motion.div>
-          )}
-
-          {/* error */}
-          {error && !loading && (
-            <motion.div
-              key="error"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex flex-col items-center gap-4 py-24 text-center"
-            >
-              <div
-                className="w-16 h-16 rounded-2xl flex items-center justify-center mb-2"
-                style={{ background: "rgba(239,68,68,.10)", border: "1px solid rgba(239,68,68,.20)" }}
-              >
-                <Tv size={28} style={{ color: "rgba(239,68,68,.60)" }} />
-              </div>
-              <p className="font-bold text-white text-lg">Failed to load series</p>
-              <p className="text-sm" style={{ color: "rgba(148,163,184,.50)" }}>
-                Something went wrong. Check your connection and try again.
-              </p>
-              <button
-                onClick={() => fetchSeries(1, false)}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold
-                           transition-all hover:scale-105 active:scale-95 mt-2"
-                style={{
-                  background: "rgba(99,102,241,.15)",
-                  color:       "#a5b4fc",
-                  border:      "1px solid rgba(99,102,241,.25)",
-                }}
-              >
-                <RefreshCw size={13} /> Retry
-              </button>
-            </motion.div>
-          )}
-
-          {/* results */}
-          {!loading && !error && series.length > 0 && (
-            <motion.div
-              key="results"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{   opacity: 0        }}
-            >
-              {viewMode === "grid" ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
-                  {series.map((s, i) => (
-                    <AnimeCard key={`${s.mal_id}-${i}`} anime={s} index={i} />
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col gap-2 sm:gap-2.5">
-                  {series.map((s, i) => (
-                    <ListRow key={`${s.mal_id}-${i}`} anime={s} index={i} />
-                  ))}
-                </div>
-              )}
-
-              {/* load more */}
-              {hasMore && (
-                <div className="flex justify-center mt-8 sm:mt-12">
-                  <button
-                    onClick={loadMore}
-                    disabled={loadingMore}
-                    className="flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold
-                               transition-all hover:scale-105 active:scale-95 disabled:opacity-60
-                               disabled:cursor-not-allowed disabled:hover:scale-100"
-                    style={{
-                      background: "rgba(99,102,241,.15)",
-                      color:       "#a5b4fc",
-                      border:      "1px solid rgba(99,102,241,.28)",
-                    }}
-                  >
-                    {loadingMore
-                      ? <><RefreshCw size={14} className="animate-spin" /> Loading…</>
-                      : <>Load More <ChevronRight size={14} /></>
-                    }
-                  </button>
-                </div>
-              )}
-            </motion.div>
-          )}
-
-          {/* empty */}
-          {!loading && !error && series.length === 0 && (
-            <motion.div
-              key="empty"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex flex-col items-center gap-4 py-24 text-center"
-            >
-              <div
-                className="w-16 h-16 rounded-2xl flex items-center justify-center mb-2"
-                style={{ background: "rgba(99,102,241,.08)", border: "1px solid rgba(99,102,241,.16)" }}
-              >
-                <Tv size={28} style={{ color: "rgba(99,102,241,.35)" }} />
-              </div>
-              <p className="font-bold text-white text-lg">No {activeLabel} found</p>
-              <p className="text-sm" style={{ color: "rgba(148,163,184,.45)" }}>
-                Try adjusting your filters or switching to a different tab.
-              </p>
-              {(sortBy !== DEFAULT_SORT || minScore !== DEFAULT_SCORE || season !== DEFAULT_SEASON) && (
-                <button
-                  onClick={() => {
-                    filterRef.current = { sortBy: DEFAULT_SORT, minScore: DEFAULT_SCORE, season: DEFAULT_SEASON };
-                    setSortBy(DEFAULT_SORT);
-                    setMinScore(DEFAULT_SCORE);
-                    setSeason(DEFAULT_SEASON);
-                  }}
-                  className="flex items-center gap-1.5 text-xs font-semibold px-4 py-2 rounded-xl
-                             transition-all hover:scale-105 mt-2"
-                  style={{
-                    background: "rgba(99,102,241,.12)",
-                    border:     "1px solid rgba(99,102,241,.22)",
-                    color:      "#a5b4fc",
-                  }}
-                >
-                  <RefreshCw size={11} /> Clear Filters
+            {hasMore && (
+              <div className="flex justify-center mt-10">
+                <button onClick={() => load(page + 1, true)} disabled={loadingMore}
+                  className="inline-flex items-center gap-2 px-7 py-3 rounded-xl text-sm font-bold border transition-colors hover:bg-indigo-400/10 disabled:opacity-60"
+                  style={{ color: ACCENT, borderColor: "rgba(165,180,252,.4)" }}>
+                  {loadingMore ? <><RefreshCw size={14} className="animate-spin" /> Loading</> : <>Load more <ChevronRight size={14} /></>}
                 </button>
-              )}
-            </motion.div>
-          )}
-
-        </AnimatePresence>
-      </div>
+              </div>
+            )}
+          </>
+        )}
+      </main>
     </div>
   );
 };
 
-export default Series; 
+export default Series;

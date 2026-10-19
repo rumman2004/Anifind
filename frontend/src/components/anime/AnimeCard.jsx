@@ -1,29 +1,20 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Star, Play, Tv, Plus, Check } from "lucide-react";
+import { Heart, Star, Play, Tv } from "lucide-react";
 import { useFavorites } from "../../context/FavoritesContext";
 import { useAuth } from "../../context/AuthContext";
-import { truncateText, formatScore } from "../../utils/helpers";
-
-/* ══════════════════════════════════════════════════════════
-   DESIGN TOKENS
-══════════════════════════════════════════════════════════ */
-const CARD_BG     = "#0f0f1c";
-const CARD_BG_2   = "#13132a";
-const INDIGO      = "#a5b4fc";
-const INDIGO_DARK = "rgba(99,102,241,.85)";
 
 /* ══════════════════════════════════════════════════════════
    STATUS CONFIG
 ══════════════════════════════════════════════════════════ */
 const STATUS_CFG = {
   "Currently Airing": { dot: "#4ade80", label: "Airing",   color: "#4ade80" },
-  "Finished Airing":  { dot: null,      label: "Finished", color: "rgba(148,163,184,.55)" },
+  "Finished Airing":  { dot: null,      label: "Finished", color: "var(--card-text-muted, rgba(148,163,184,.6))" },
   "Not yet aired":    { dot: "#fb923c", label: "Upcoming", color: "#fb923c" },
 };
 
-const getStatus = (s) => STATUS_CFG[s] ?? { dot: null, label: s, color: "rgba(148,163,184,.45)" };
+const getStatus = (s) => STATUS_CFG[s] ?? { dot: null, label: s, color: "var(--card-text-muted, rgba(148,163,184,.5))" };
 
 /* ══════════════════════════════════════════════════════════
    SCORE COLOUR
@@ -36,7 +27,7 @@ const scoreColor = (s) =>
              "rgba(148,163,184,.6)";
 
 /* ══════════════════════════════════════════════════════════
-   ANIME CARD
+   ANIME CARD (Unified, pixel-aligned, fully responsive)
 ══════════════════════════════════════════════════════════ */
 const AnimeCard = ({ anime, index = 0 }) => {
   const { user }                                    = useAuth();
@@ -74,28 +65,28 @@ const AnimeCard = ({ anime, index = 0 }) => {
       transition={{ delay: Math.min(index * 0.05, 0.4), duration: 0.35, ease: "easeOut" }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className="group relative flex flex-col"
+      className="group relative flex flex-col h-full w-full"
       style={{ willChange: "transform" }}
     >
-      <Link to={`/anime/${anime.mal_id}`} className="block flex-1">
+      <Link to={`/anime/${anime.mal_id}`} className="flex flex-col flex-1 h-full w-full">
 
         {/* ── CARD SHELL ── */}
         <div
-          className="relative flex flex-col h-full rounded-2xl overflow-hidden transition-all duration-350"
+          className="anime-card-shell relative flex flex-col flex-1 h-full rounded-2xl overflow-hidden transition-all duration-300"
           style={{
-            background: CARD_BG,
+            background: "var(--card-bg, #0f0f1c)",
             border: hovered
-              ? "1px solid rgba(99,102,241,.40)"
-              : "1px solid rgba(255,255,255,.06)",
+              ? "1px solid var(--card-border-hover, rgba(99,102,241,.40))"
+              : "1px solid var(--card-border, rgba(255,255,255,.07))",
             boxShadow: hovered
-              ? "0 20px 60px rgba(0,0,0,.60), 0 0 0 1px rgba(99,102,241,.20)"
-              : "0 4px 20px rgba(0,0,0,.40)",
+              ? "var(--card-shadow-hover, 0 20px 60px rgba(0,0,0,.60))"
+              : "var(--card-shadow, 0 4px 20px rgba(0,0,0,.30))",
             transform: hovered ? "translateY(-5px) scale(1.012)" : "translateY(0) scale(1)",
           }}
         >
 
           {/* ════════════════ POSTER ════════════════ */}
-          <div className="relative overflow-hidden" style={{ aspectRatio: "2/3" }}>
+          <div className="relative overflow-hidden w-full flex-shrink-0" style={{ aspectRatio: "2/3" }}>
 
             {/* image */}
             {!imgError ? (
@@ -113,18 +104,18 @@ const AnimeCard = ({ anime, index = 0 }) => {
             ) : (
               <div
                 className="w-full h-full flex flex-col items-center justify-center gap-2"
-                style={{ background: CARD_BG_2 }}
+                style={{ background: "var(--bg-surface-2, #13132a)" }}
               >
-                <Tv size={32} style={{ color: "rgba(148,163,184,.20)" }} />
-                <p className="text-[10px]" style={{ color: "rgba(148,163,184,.25)" }}>No image</p>
+                <Tv size={32} style={{ color: "var(--card-text-muted, rgba(148,163,184,.30))" }} />
+                <p className="text-[10px]" style={{ color: "var(--card-text-muted, rgba(148,163,184,.35))" }}>No image</p>
               </div>
             )}
 
-            {/* gradient overlays */}
+            {/* poster bottom gradient overlay */}
             <div
               className="absolute inset-0 pointer-events-none"
               style={{
-                background: "linear-gradient(to top, rgba(15,15,28,1) 0%, rgba(15,15,28,.50) 35%, transparent 70%)",
+                background: "var(--card-poster-fade, linear-gradient(to top, rgba(15,15,28,1) 0%, rgba(15,15,28,.50) 35%, transparent 70%))",
               }}
             />
             <div
@@ -137,17 +128,17 @@ const AnimeCard = ({ anime, index = 0 }) => {
 
             {/* ── TOP LEFT: score ── */}
             <div
-              className="absolute top-2.5 left-2.5 flex items-center gap-1 px-2 py-1 rounded-lg"
+              className="absolute top-2.5 left-2.5 flex items-center gap-1 px-2 py-1 rounded-lg z-10"
               style={{
                 background: "rgba(0,0,0,.72)",
                 backdropFilter: "blur(6px)",
-                border: "1px solid rgba(255,255,255,.08)",
+                border: "1px solid rgba(255,255,255,.12)",
               }}
             >
               <Star size={9} style={{ color: scoreColor(sc), fill: sc ? scoreColor(sc) : "none" }} />
               <span
-                className="font-bold leading-none"
-                style={{ fontSize: 11, color: sc ? scoreColor(sc) : "rgba(148,163,184,.5)" }}
+                className="font-bold leading-none text-white"
+                style={{ fontSize: 11, color: sc ? scoreColor(sc) : "rgba(148,163,184,.7)" }}
               >
                 {sc ? sc.toFixed(1) : "N/A"}
               </span>
@@ -158,7 +149,7 @@ const AnimeCard = ({ anime, index = 0 }) => {
               <button
                 onClick={handleFav}
                 disabled={toggling}
-                className="absolute top-2.5 right-2.5 flex items-center justify-center rounded-xl transition-all duration-200 hover:scale-110 active:scale-90"
+                className="absolute top-2.5 right-2.5 flex items-center justify-center rounded-xl transition-all duration-200 hover:scale-110 active:scale-90 z-10"
                 style={{
                   width: 32,
                   height: 32,
@@ -168,7 +159,7 @@ const AnimeCard = ({ anime, index = 0 }) => {
                   backdropFilter: "blur(6px)",
                   border: favorited
                     ? "1px solid rgba(236,72,153,.45)"
-                    : "1px solid rgba(255,255,255,.10)",
+                    : "1px solid rgba(255,255,255,.12)",
                 }}
                 aria-label={favorited ? "Remove from favorites" : "Add to favorites"}
               >
@@ -183,7 +174,7 @@ const AnimeCard = ({ anime, index = 0 }) => {
                     {favorited ? (
                       <Heart size={13} style={{ color: "#ec4899", fill: "#ec4899" }} />
                     ) : (
-                      <Heart size={13} style={{ color: "rgba(255,255,255,.70)" }} />
+                      <Heart size={13} style={{ color: "rgba(255,255,255,.80)" }} />
                     )}
                   </motion.span>
                 </AnimatePresence>
@@ -207,11 +198,11 @@ const AnimeCard = ({ anime, index = 0 }) => {
             {/* ── BOTTOM LEFT: type badge ── */}
             {anime.type && (
               <div
-                className="absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-lg font-bold uppercase"
+                className="absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-lg font-bold uppercase z-10"
                 style={{
-                  background: "rgba(99,102,241,.22)",
-                  border: "1px solid rgba(99,102,241,.35)",
-                  color: INDIGO,
+                  background: "var(--card-genre-bg, rgba(99,102,241,.22))",
+                  border: "1px solid var(--card-genre-border, rgba(99,102,241,.35))",
+                  color: "var(--card-genre-color, #a5b4fc)",
                   fontSize: 9,
                   backdropFilter: "blur(4px)",
                 }}
@@ -222,7 +213,7 @@ const AnimeCard = ({ anime, index = 0 }) => {
 
             {/* ── HOVER CENTRE: play button ── */}
             <div
-              className="absolute inset-0 flex items-center justify-center pointer-events-none"
+              className="absolute inset-0 flex items-center justify-center pointer-events-none z-10"
               style={{
                 opacity: hovered ? 1 : 0,
                 transition: "opacity .25s ease",
@@ -235,7 +226,7 @@ const AnimeCard = ({ anime, index = 0 }) => {
                 style={{
                   width: 44,
                   height: 44,
-                  background: INDIGO_DARK,
+                  background: "rgba(99,102,241,.85)",
                   boxShadow: "0 4px 24px rgba(99,102,241,.55)",
                 }}
               >
@@ -247,100 +238,108 @@ const AnimeCard = ({ anime, index = 0 }) => {
           {/* ════════ END POSTER ════════ */}
 
           {/* ════════════════ INFO ════════════════ */}
-          <div className="flex flex-col gap-1.5 p-3">
+          <div className="flex flex-col flex-1 justify-between p-3 gap-1.5">
 
-            {/* title */}
-            <h3
-              className="text-white font-bold leading-tight line-clamp-2 transition-colors duration-200"
-              style={{
-                fontSize: "clamp(11px,2.2vw,13px)",
-                color: hovered ? INDIGO : "#fff",
-              }}
-            >
-              {title}
-            </h3>
+            <div className="flex flex-col gap-1">
+              {/* title with locked 2-line min-height for perfect vertical alignment */}
+              <h3
+                className="font-bold leading-tight line-clamp-2 transition-colors duration-200"
+                style={{
+                  fontSize: "clamp(11px,2.2vw,13px)",
+                  color: hovered ? "var(--card-genre-color, #a5b4fc)" : "var(--card-title, #fff)",
+                  minHeight: "2.5em",
+                }}
+              >
+                {title}
+              </h3>
 
-            {/* original title (if different) */}
-            {anime.title_english && anime.title !== anime.title_english && (
+              {/* original title (fixed 14px height so rows without subtitle never shift) */}
               <p
                 className="line-clamp-1"
-                style={{ fontSize: 10, color: "rgba(148,163,184,.40)" }}
+                style={{
+                  fontSize: 10,
+                  color: "var(--card-text-muted, rgba(148,163,184,.45))",
+                  height: "14px",
+                  visibility: anime.title_english && anime.title !== anime.title_english ? "visible" : "hidden",
+                }}
               >
-                {anime.title}
+                {anime.title_english && anime.title !== anime.title_english ? anime.title : "—"}
               </p>
-            )}
 
-            {/* meta row */}
-            <div
-              className="flex items-center gap-1.5 flex-wrap mt-0.5"
-              style={{ fontSize: 10, color: "rgba(148,163,184,.55)" }}
-            >
-              {/* episodes */}
-              {anime.episodes && (
-                <span
-                  className="flex items-center gap-1 px-1.5 py-0.5 rounded-md"
-                  style={{ background: "rgba(255,255,255,.05)", border: "1px solid rgba(255,255,255,.07)" }}
-                >
-                  {anime.episodes} ep{anime.episodes !== 1 ? "s" : ""}
-                </span>
-              )}
-
-              {/* status */}
-              {anime.status && (
-                <span className="flex items-center gap-1" style={{ color: status.color }}>
-                  {status.dot && (
-                    <span
-                      className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                      style={{
-                        background: status.dot,
-                        boxShadow: `0 0 4px ${status.dot}`,
-                        ...(anime.status === "Currently Airing" ? { animation: "pulse 1.8s infinite" } : {}),
-                      }}
-                    />
-                  )}
-                  {status.label}
-                </span>
-              )}
-
-              {/* year */}
-              {anime.year && (
-                <span style={{ color: "rgba(148,163,184,.40)" }}>
-                  {anime.year}
-                </span>
-              )}
-            </div>
-
-            {/* genre pills (1–2 max) */}
-            {anime.genres?.length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-0.5">
-                {anime.genres.slice(0, 2).map(g => (
+              {/* meta row */}
+              <div
+                className="flex items-center gap-1.5 flex-wrap mt-0.5"
+                style={{ fontSize: 10, color: "var(--card-text-muted, rgba(148,163,184,.6))" }}
+              >
+                {/* episodes */}
+                {anime.episodes && (
                   <span
-                    key={g.mal_id}
-                    className="px-1.5 py-0.5 rounded-md"
+                    className="flex items-center gap-1 px-1.5 py-0.5 rounded-md"
                     style={{
-                      fontSize: 9,
-                      background: "rgba(99,102,241,.10)",
-                      border: "1px solid rgba(99,102,241,.20)",
-                      color: "rgba(165,180,252,.70)",
+                      background: "var(--card-pill-bg, rgba(255,255,255,.05))",
+                      border: "1px solid var(--card-pill-border, rgba(255,255,255,.07))",
+                      color: "var(--card-text-muted, rgba(148,163,184,.75))",
                     }}
                   >
-                    {g.name}
+                    {anime.episodes} ep{anime.episodes !== 1 ? "s" : ""}
                   </span>
-                ))}
-                {anime.genres.length > 2 && (
-                  <span
-                    className="px-1.5 py-0.5 rounded-md"
-                    style={{
-                      fontSize: 9,
-                      background: "rgba(255,255,255,.05)",
-                      color: "rgba(148,163,184,.40)",
-                    }}
-                  >
-                    +{anime.genres.length - 2}
+                )}
+
+                {/* status */}
+                {anime.status && (
+                  <span className="flex items-center gap-1" style={{ color: status.color }}>
+                    {status.dot && (
+                      <span
+                        className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                        style={{
+                          background: status.dot,
+                          boxShadow: `0 0 4px ${status.dot}`,
+                          ...(anime.status === "Currently Airing" ? { animation: "pulse 1.8s infinite" } : {}),
+                        }}
+                      />
+                    )}
+                    {status.label}
+                  </span>
+                )}
+
+                {/* year */}
+                {anime.year && (
+                  <span style={{ color: "var(--card-text-muted, rgba(148,163,184,.45))" }}>
+                    {anime.year}
                   </span>
                 )}
               </div>
-            )}
+            </div>
+
+            {/* genre pills pinned neatly to the bottom */}
+            <div className="flex flex-wrap gap-1 mt-auto pt-1">
+              {anime.genres?.slice(0, 2).map(g => (
+                <span
+                  key={g.mal_id}
+                  className="px-1.5 py-0.5 rounded-md"
+                  style={{
+                    fontSize: 9,
+                    background: "var(--card-genre-bg, rgba(99,102,241,.10))",
+                    border: "1px solid var(--card-genre-border, rgba(99,102,241,.20))",
+                    color: "var(--card-genre-color, rgba(165,180,252,.75))",
+                  }}
+                >
+                  {g.name}
+                </span>
+              ))}
+              {anime.genres?.length > 2 && (
+                <span
+                  className="px-1.5 py-0.5 rounded-md"
+                  style={{
+                    fontSize: 9,
+                    background: "var(--card-pill-bg, rgba(255,255,255,.05))",
+                    color: "var(--card-text-muted, rgba(148,163,184,.50))",
+                  }}
+                >
+                  +{anime.genres.length - 2}
+                </span>
+              )}
+            </div>
 
           </div>
           {/* ════════ END INFO ════════ */}
@@ -350,7 +349,7 @@ const AnimeCard = ({ anime, index = 0 }) => {
             className="absolute bottom-0 left-0 right-0 h-0.5 rounded-b-2xl transition-all duration-400"
             style={{
               background: hovered
-                ? "linear-gradient(to right, #6366f1, #a855f7)"
+                ? "linear-gradient(to right, var(--color-primary, #6366f1), var(--color-secondary, #ec4899))"
                 : "transparent",
             }}
           />

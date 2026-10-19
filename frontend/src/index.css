@@ -1,38 +1,606 @@
 @import "tailwindcss";
 
+/* ══════════════════════════════════════════════════════════════════════════════
+   MASTER DESIGN SYSTEM & ROOT TOKENS
+   Easily customizable design variables for fonts, font colors, light & dark
+   themes, brand logo, card surfaces, button gradients, and hero overlays.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. GLOBAL BASE TOKENS (Shared across themes) ── */
+:root {
+    /* ── Typography (Google Fonts imported in index.html) ── */
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-heading: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+    /* ── PullCord Positioning & Dimensions (Beneath Navbar) ── */
+    --pullcord-top: 64px;
+    --pullcord-right: 2rem;
+    --pullcord-right-mobile: 1.25rem;
+    --pullcord-z: 40;
+}
+
 @theme {
+    --color-primary: var(--color-primary, #6366f1);
+    --color-primary-dark: var(--color-primary-dark, #4f46e5);
+    --color-secondary: var(--color-secondary, #ec4899);
+    --color-bg: var(--bg-main, #0a0a14);
+    --color-surface: var(--bg-surface, #121224);
+    --color-surface-2: var(--bg-surface-2, #181830);
+    --color-border: var(--border-subtle, rgba(255, 255, 255, 0.08));
+    --color-text: var(--text-main, #f8fafc);
+    --color-text-muted: var(--text-muted, #94a3b8);
+
+    --font-family-sans: var(--font-sans);
+    --font-family-heading: var(--font-heading);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   DARK THEME (Default)
+   ══════════════════════════════════════════════════════════════════════════════ */
+:root,
+html[data-theme="dark"],
+html.dark {
+    /* ── Core Brand / Primary & Secondary ── */
     --color-primary: #6366f1;
     --color-primary-dark: #4f46e5;
     --color-secondary: #ec4899;
-    --color-bg: #0f0f1a;
-    --color-surface: #1a1a2e;
-    --color-surface-2: #16213e;
-    --color-border: #2a2a4a;
-    --color-text: #e2e8f0;
-    --color-text-muted: #94a3b8;
+    --color-secondary-hover: #db2777;
 
-    --font-family-sans: "Inter", sans-serif;
+    /* ── Backgrounds & Surfaces ── */
+    --bg-main: #0a0a14;
+    --bg-secondary: #0f0f1f;
+    --bg-surface: #121224;
+    --bg-surface-2: #181830;
+    --bg-surface-hover: #1f1f3d;
+    --bg-card: rgba(255, 255, 255, 0.035);
+    --bg-card-hover: rgba(255, 255, 255, 0.065);
+    --bg-glass: rgba(18, 18, 36, 0.75);
+
+    /* ── Borders & Outlines ── */
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-medium: rgba(255, 255, 255, 0.14);
+    --border-hover: rgba(255, 255, 255, 0.22);
+    --border-accent: rgba(99, 102, 241, 0.40);
+
+    /* ── Text / Font Colors (Dark Mode) ── */
+    --text-heading: #ffffff;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --text-subtle: rgba(148, 163, 184, 0.70);
+    --text-inverted: #0a0a14;
+    --text-link: #a5b4fc;
+    --text-link-hover: #c7d2fe;
+
+    /* ── Logo & Brand Tokens (Dark Mode) ── */
+    --logo-text: #ffffff;
+    --logo-accent: #a5b4fc;
+    --logo-glow: rgba(99, 102, 241, 0.50);
+    --logo-border: rgba(99, 102, 241, 0.35);
+    --logo-bg: rgba(15, 15, 28, 0.80);
+
+    /* ── Gradients (Dark Mode) ── */
+    /* Hero overlays (cinematic dark) */
+    --hero-fade-left: linear-gradient(to right, rgba(10,10,20,.96) 0%, rgba(10,10,20,.70) 35%, rgba(10,10,20,.15) 60%, transparent 100%);
+    --hero-fade-bottom: linear-gradient(to top, rgba(10,10,20,1) 0%, rgba(10,10,20,.85) 18%, rgba(10,10,20,.3) 35%, transparent 60%);
+    --hero-fade-top: linear-gradient(to bottom, rgba(10,10,20,.6) 0%, transparent 25%);
+
+    /* Card poster fade */
+    --card-poster-fade: linear-gradient(to top, rgba(15,15,28,1) 0%, rgba(15,15,28,.55) 30%, transparent 65%);
+
+    /* Primary button gradient */
+    --btn-primary-bg: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    --btn-primary-hover-bg: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+    --btn-primary-text: #ffffff;
+    --btn-primary-glow: 0 4px 20px rgba(99, 102, 241, 0.40);
+
+    /* Accent lines & glows */
+    --accent-gradient: linear-gradient(90deg, transparent 0%, rgba(99,102,241,.40) 30%, rgba(139,92,246,.40) 60%, transparent 100%);
+    --glow-radial: radial-gradient(ellipse, rgba(99,102,241,.08) 0%, transparent 70%);
+
+    /* ── AnimeCard Tokens (Dark Mode) ── */
+    --card-bg: #0f0f1c;
+    --card-border: rgba(255, 255, 255, 0.07);
+    --card-border-hover: rgba(99, 102, 241, 0.40);
+    --card-title: #ffffff;
+    --card-title-hover: #a5b4fc;
+    --card-text-muted: rgba(148, 163, 184, 0.65);
+    --card-pill-bg: rgba(255, 255, 255, 0.05);
+    --card-pill-border: rgba(255, 255, 255, 0.08);
+    --card-genre-bg: rgba(99, 102, 241, 0.14);
+    --card-genre-border: rgba(99, 102, 241, 0.25);
+    --card-genre-color: #a5b4fc;
+    --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.40);
+    --card-shadow-hover: 0 20px 60px rgba(0, 0, 0, 0.60), 0 0 0 1px rgba(99, 102, 241, 0.20);
+
+    /* ── Navigation & Controls (Dark Mode) ── */
+    --nav-bg: rgba(10, 10, 20, 0.94);
+    --nav-border: rgba(255, 255, 255, 0.06);
+    --nav-link-color: rgba(255, 255, 255, 0.60);
+    --nav-link-hover-color: #ffffff;
+    --nav-link-hover-bg: rgba(255, 255, 255, 0.06);
+    --nav-link-active-color: #ffffff;
+    --nav-link-active-bg: rgba(99, 102, 241, 0.15);
+    --nav-link-active-border: rgba(99, 102, 241, 0.30);
+    --nav-link-active-icon: #a5b4fc;
+
+    --nav-btn-bg: rgba(255, 255, 255, 0.06);
+    --nav-btn-border: rgba(255, 255, 255, 0.08);
+    --nav-btn-color: rgba(255, 255, 255, 0.70);
+    --nav-btn-hover-bg: rgba(255, 255, 255, 0.12);
+    --nav-btn-hover-color: #ffffff;
+    --nav-user-text: rgba(255, 255, 255, 0.85);
+
+    --avatar-border: rgba(99, 102, 241, 0.40);
+    --avatar-glow: rgba(99, 102, 241, 0.18);
+    --avatar-fallback-bg: linear-gradient(135deg, #6366f1, #8b5cf6);
+
+    --nav-dropdown-bg: rgba(12, 12, 24, 0.97);
+    --nav-dropdown-border: rgba(255, 255, 255, 0.10);
+    --nav-dropdown-shadow: 0 20px 56px rgba(0, 0, 0, 0.70), 0 4px 16px rgba(99, 102, 241, 0.10);
+
+    --footer-bg: #08080f;
+    --footer-border: rgba(255, 255, 255, 0.06);
+    --footer-heading: #ffffff;
+    --footer-text: rgba(148, 163, 184, 0.55);
+    --footer-text-hover: #a5b4fc;
+
+    /* ── PullCord Theme Toggle (Dark Mode) ── */
+    --pullcord-ink: rgba(255, 255, 255, 0.38);
+    --pullcord-knob-dark-top: #ffffff;
+    --pullcord-knob-dark-bottom: #cbd5e1;
+    --pullcord-knob-stroke-dark: rgba(0, 0, 0, 0.15);
+    --pullcord-knob-ring-dark: rgba(255, 255, 255, 0.60);
+
+    /* ── Scrollbars (Dark Mode) ── */
+    --scrollbar-track: var(--bg-surface);
+    --scrollbar-thumb: var(--color-primary);
+    --scrollbar-thumb-hover: var(--color-primary-dark);
 }
 
+/* ══════════════════════════════════════════════════════════════════════════════
+   LIGHT THEME (Botanical / Editorial Palette)
+   - Soft White: #E6E9DF
+   - Sage Green: #A9B887
+   - Deep Olive: #2E3D28
+   ══════════════════════════════════════════════════════════════════════════════ */
+html[data-theme="light"],
+html.light {
+    /* ── Botanical Color Palette Base ── */
+    --soft-white: #E6E9DF;
+    --soft-white-light: #F0F2EB;
+    --soft-white-card: #FAFBF7;
+    --sage-green: #A9B887;
+    --sage-green-muted: #8FA26D;
+    --sage-green-dark: #6D804E;
+    --deep-olive: #2E3D28;
+    --deep-olive-muted: #4B5E44;
+    --deep-olive-subtle: #687D60;
+
+    /* ── Core Brand / Primary & Secondary (Light Mode) ── */
+    --color-primary: #556B48;
+    --color-primary-dark: #3F5234;
+    --color-secondary: #8FA26D;
+    --color-secondary-hover: #738753;
+
+    /* ── Backgrounds & Surfaces (Light Mode) ── */
+    --bg-main: #E6E9DF;
+    --bg-secondary: #DFE3D6;
+    --bg-surface: #FAFBF7;
+    --bg-surface-2: #EFF1E8;
+    --bg-surface-hover: #FFFFFF;
+    --bg-card: #FAFBF7;
+    --bg-card-hover: #FFFFFF;
+    --bg-glass: rgba(250, 251, 247, 0.88);
+
+    /* ── Borders & Outlines (Light Mode) ── */
+    --border-subtle: rgba(46, 61, 40, 0.12);
+    --border-medium: rgba(46, 61, 40, 0.18);
+    --border-hover: rgba(46, 61, 40, 0.28);
+    --border-accent: rgba(169, 184, 135, 0.60);
+
+    /* ── Text / Font Colors (Light Mode) ── */
+    --text-heading: #2E3D28;
+    --text-main: #2E3D28;
+    --text-muted: #4B5E44;
+    --text-subtle: #687D60;
+    --text-inverted: #FAFBF7;
+    --text-link: #3D5235;
+    --text-link-hover: #243320;
+
+    /* ── Logo & Brand Tokens (Light Mode) ── */
+    --logo-text: #2E3D28;
+    --logo-accent: #6D804E;
+    --logo-glow: rgba(169, 184, 135, 0.45);
+    --logo-border: rgba(46, 61, 40, 0.20);
+    --logo-bg: rgba(250, 251, 247, 0.90);
+
+    /* ── Gradients (Light Mode) ── */
+    /* Hero overlays: preserve rich cinematic contrast */
+    --hero-fade-left: linear-gradient(to right, rgba(10,10,20,.94) 0%, rgba(10,10,20,.65) 35%, rgba(10,10,20,.12) 65%, transparent 100%);
+    --hero-fade-bottom: linear-gradient(to top, rgba(10,10,20,1) 0%, rgba(10,10,20,.85) 18%, rgba(10,10,20,.3) 35%, transparent 60%);
+    --hero-fade-top: linear-gradient(to bottom, rgba(10,10,20,.6) 0%, transparent 25%);
+
+    /* Card poster fade */
+    --card-poster-fade: linear-gradient(to top, #FAFBF7 0%, rgba(250,251,247,.65) 25%, transparent 55%);
+
+    /* Primary button gradient (Deep Olive to Sage) */
+    --btn-primary-bg: linear-gradient(135deg, #6B7F4E 0%, #2E3D28 100%);
+    --btn-primary-hover-bg: linear-gradient(135deg, #5B6E40 0%, #243320 100%);
+    --btn-primary-text: #ffffff;
+    --btn-primary-glow: 0 4px 20px rgba(46, 61, 40, 0.25);
+
+    /* Accent lines & glows */
+    --accent-gradient: linear-gradient(90deg, transparent 0%, rgba(169,184,135,.50) 30%, rgba(46,61,40,.35) 60%, transparent 100%);
+    --glow-radial: radial-gradient(ellipse, rgba(169,184,135,.15) 0%, transparent 70%);
+
+    /* ── AnimeCard Tokens (Light Mode) ── */
+    --card-bg: #FAFBF7;
+    --card-border: rgba(46, 61, 40, 0.12);
+    --card-border-hover: rgba(169, 184, 135, 0.60);
+    --card-title: #2E3D28;
+    --card-title-hover: #6D804E;
+    --card-text-muted: #4B5E44;
+    --card-pill-bg: rgba(46, 61, 40, 0.05);
+    --card-pill-border: rgba(46, 61, 40, 0.10);
+    --card-genre-bg: rgba(169, 184, 135, 0.28);
+    --card-genre-border: rgba(109, 128, 78, 0.35);
+    --card-genre-color: #2E3D28;
+    --card-shadow: 0 4px 18px rgba(46, 61, 40, 0.06);
+    --card-shadow-hover: 0 16px 40px rgba(46, 61, 40, 0.14), 0 0 0 1px rgba(169, 184, 135, 0.40);
+
+    /* ── Navigation & Controls (Light Mode) ── */
+    --nav-bg: rgba(230, 233, 223, 0.92);
+    --nav-border: rgba(46, 61, 40, 0.12);
+    --nav-link-color: rgba(46, 61, 40, 0.70);
+    --nav-link-hover-color: #2E3D28;
+    --nav-link-hover-bg: rgba(46, 61, 40, 0.08);
+    --nav-link-active-color: #2E3D28;
+    --nav-link-active-bg: rgba(169, 184, 135, 0.35);
+    --nav-link-active-border: rgba(109, 128, 78, 0.40);
+    --nav-link-active-icon: #2E3D28;
+
+    --nav-btn-bg: rgba(46, 61, 40, 0.07);
+    --nav-btn-border: rgba(46, 61, 40, 0.14);
+    --nav-btn-color: #2E3D28;
+    --nav-btn-hover-bg: rgba(169, 184, 135, 0.28);
+    --nav-btn-hover-color: #2E3D28;
+    --nav-user-text: #2E3D28;
+
+    --avatar-border: rgba(46, 61, 40, 0.30);
+    --avatar-glow: rgba(169, 184, 135, 0.35);
+    --avatar-fallback-bg: linear-gradient(135deg, #6B7F4E, #2E3D28);
+
+    --nav-dropdown-bg: #FAFBF7;
+    --nav-dropdown-border: rgba(46, 61, 40, 0.15);
+    --nav-dropdown-shadow: 0 16px 40px rgba(46, 61, 40, 0.14);
+
+    --footer-bg: #DFE3D6;
+    --footer-border: rgba(46, 61, 40, 0.12);
+    --footer-heading: #2E3D28;
+    --footer-text: #4B5E44;
+    --footer-text-hover: #2E3D28;
+
+    /* ── PullCord Theme Toggle (Light Mode) ── */
+    --pullcord-ink: rgba(46, 61, 40, 0.60);
+    --pullcord-knob-light-top: #4A5F41;
+    --pullcord-knob-light-bottom: #2E3D28;
+    --pullcord-knob-stroke-light: #A9B887;
+    --pullcord-knob-ring-light: rgba(169, 184, 135, 0.75);
+
+    /* ── Scrollbars (Light Mode) ── */
+    --scrollbar-track: var(--bg-main);
+    --scrollbar-thumb: var(--sage-green);
+    --scrollbar-thumb-hover: var(--sage-green-dark);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   GLOBAL STYLES & APPLICATION RULES
+   ══════════════════════════════════════════════════════════════════════════════ */
 * {
     box-sizing: border-box;
 }
 
 body {
-    background-color: var(--color-bg);
-    color: var(--color-text);
-    font-family: var(--font-family-sans);
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    font-family: var(--font-sans);
+    transition: background-color 0.35s ease, color 0.3s ease;
 }
 
+/* Headings use the modern editorial display font */
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    color: var(--text-heading);
+}
+
+/* Subtle architectural grid pattern in light mode (as seen in reference design) */
+html[data-theme="light"] body,
+html.light body {
+    background-image: 
+        linear-gradient(to right, rgba(46, 61, 40, 0.045) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(46, 61, 40, 0.045) 1px, transparent 1px);
+    background-size: 36px 36px;
+}
+
+/* ── Smooth Theme Crossfade (High Performance) ── */
+html.theme-transitioning body,
+html.theme-transitioning nav,
+html.theme-transitioning footer,
+html.theme-transitioning main {
+    transition: background-color 0.25s ease, color 0.2s ease, border-color 0.25s ease;
+}
+
+/* ── Primary Buttons ── */
+button.bg-primary,
+.btn-primary,
+[style*="linear-gradient(135deg,#6366f1"] {
+    background: var(--btn-primary-bg) !important;
+    color: var(--btn-primary-text) !important;
+    box-shadow: var(--btn-primary-glow) !important;
+}
+
+button.bg-primary:hover,
+.btn-primary:hover {
+    background: var(--btn-primary-hover-bg) !important;
+}
+
+html[data-theme="light"] [style*="linear-gradient(135deg,#6366f1"] *,
+html[data-theme="light"] button.bg-primary * {
+    color: #FFFFFF !important;
+}
+
+/* ── Accent Dividers ── */
+.accent-divider,
+[style*="linear-gradient(90deg,transparent 0%,rgba(99,102,241"] {
+    background: var(--accent-gradient) !important;
+}
+
+/* ── Light Mode Color Normalizations ── */
+html[data-theme="light"] [style*="background: #0a0a14"],
+html[data-theme="light"] [style*="background:#0a0a14"],
+html[data-theme="light"] [style*="background: rgb(10, 10, 20)"],
+html[data-theme="light"] [style*="background: rgba(10, 10, 20"] {
+    background: var(--bg-main) !important;
+}
+
+/* Navbar in light mode */
+html[data-theme="light"] nav.fixed {
+    background: var(--nav-bg) !important;
+    border-bottom: 1px solid var(--nav-border) !important;
+    box-shadow: 0 4px 24px rgba(46, 61, 40, 0.06) !important;
+}
+
+/* Active navigation pill */
+html[data-theme="light"] [style*="background: rgba(99,102,241,.15)"],
+html[data-theme="light"] [style*="background: rgba(99, 102, 241, 0.15)"],
+html[data-theme="light"] [style*="background: rgba(99,102,241,.20)"],
+html[data-theme="light"] [style*="background: rgba(99,102,241,.18)"] {
+    background: var(--nav-link-active-bg) !important;
+    color: var(--text-heading) !important;
+    border-color: var(--nav-link-active-border) !important;
+}
+
+/* Headings and primary text in light mode */
+html[data-theme="light"] h1,
+html[data-theme="light"] h2,
+html[data-theme="light"] h3,
+html[data-theme="light"] h4,
+html[data-theme="light"] h5,
+html[data-theme="light"] h6 {
+    color: var(--text-heading) !important;
+}
+
+html[data-theme="light"] .text-white {
+    color: var(--text-heading) !important;
+}
+
+/* ── Hero Section (Always cinematic dark & crisp typography in both modes) ── */
+.hero-section {
+    background: #0a0a14 !important;
+}
+
+html[data-theme="light"] .hero-section h1,
+html[data-theme="light"] .hero-section h2,
+html[data-theme="light"] .hero-section h3,
+html[data-theme="light"] .hero-section p,
+html[data-theme="light"] .hero-section span,
+html[data-theme="light"] .hero-section .text-white {
+    color: #ffffff !important;
+}
+
+html[data-theme="light"] .hero-section [style*="color: #0a0a14"],
+html[data-theme="light"] .hero-section [style*="color:#0a0a14"] {
+    color: #0a0a14 !important;
+}
+
+html[data-theme="light"] .hero-section [style*="color: rgba(99,102,241"] {
+    color: #a5b4fc !important;
+}
+
+html[data-theme="light"] .hero-section [style*="color: rgba(255,255,255,.55)"] {
+    color: rgba(255, 255, 255, 0.70) !important;
+}
+
+html[data-theme="light"] .hero-section [style*="color: rgba(255,255,255,.72)"] {
+    color: rgba(255, 255, 255, 0.75) !important;
+}
+
+/* ── Auth Brand Panel (Always cinematic dark & crisp typography in both modes) ── */
+.auth-brand-panel {
+    background: #0c0d14 !important;
+}
+
+html[data-theme="light"] .auth-brand-panel h1,
+html[data-theme="light"] .auth-brand-panel h2,
+html[data-theme="light"] .auth-brand-panel h3,
+html[data-theme="light"] .auth-brand-panel h4,
+html[data-theme="light"] .auth-brand-panel .text-white {
+    color: #ffffff !important;
+}
+
+html[data-theme="light"] .auth-brand-panel .text-slate-200 {
+    color: #e2e8f0 !important;
+}
+
+html[data-theme="light"] .auth-brand-panel .text-slate-300 {
+    color: #cbd5e1 !important;
+}
+
+html[data-theme="light"] .auth-brand-panel .text-slate-400 {
+    color: #94a3b8 !important;
+}
+
+html[data-theme="light"] .auth-brand-panel .text-indigo-300 {
+    color: #a5b4fc !important;
+}
+
+/* ── Liquid Glass / Glassmorphism Material ── */
+.liquid-glass-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.04) 100%), rgba(10, 16, 32, 0.42) !important;
+    backdrop-filter: blur(14px) saturate(190%) contrast(115%) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(190%) contrast(115%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.22) !important;
+    box-shadow: 
+        inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.45),
+        inset 0 0 24px 0 rgba(255, 255, 255, 0.04),
+        inset 0 -1px 1px 0 rgba(255, 255, 255, 0.12),
+        0 24px 48px -12px rgba(0, 0, 0, 0.50),
+        0 0 28px -4px rgba(99, 102, 241, 0.25) !important;
+}
+
+.liquid-glass-pill {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.03) 100%), rgba(15, 22, 42, 0.40) !important;
+    backdrop-filter: blur(16px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.35), 0 4px 14px rgba(0, 0, 0, 0.2) !important;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.liquid-glass-pill:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.07) 100%), rgba(20, 28, 55, 0.50) !important;
+    border-color: rgba(255, 255, 255, 0.32) !important;
+    transform: translateY(-1.5px) !important;
+    box-shadow: inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.5), 0 8px 20px rgba(0, 0, 0, 0.3), 0 0 16px rgba(99, 102, 241, 0.2) !important;
+}
+
+.liquid-glass-badge {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.28) 0%, rgba(168, 85, 247, 0.18) 100%), rgba(15, 23, 42, 0.35) !important;
+    backdrop-filter: blur(14px) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
+    border: 1px solid rgba(165, 180, 252, 0.38) !important;
+    box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.40), 0 2px 10px rgba(99, 102, 241, 0.25) !important;
+}
+
+.liquid-glass-logo {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.04) 100%), rgba(10, 16, 30, 0.35) !important;
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.22) !important;
+    box-shadow: inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.45), 0 8px 24px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* ── AnimeCard Styling ── */
+.anime-card-shell {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--card-border) !important;
+    box-shadow: var(--card-shadow) !important;
+}
+
+.anime-card-shell h3 {
+    color: var(--card-title) !important;
+}
+
+.anime-card-shell:hover h3 {
+    color: var(--card-title-hover) !important;
+}
+
+/* Cards & containers in light mode (soft white, delicate olive border, glassmorphism) */
+html[data-theme="light"] main [style*="background: rgba(255, 255, 255, 0.03)"],
+html[data-theme="light"] main [style*="background: rgba(255, 255, 255, 0.04)"],
+html[data-theme="light"] main [style*="background: rgba(255, 255, 255, 0.05)"],
+html[data-theme="light"] main [style*="background: rgba(255, 255, 255, 0.06)"],
+html[data-theme="light"] main [style*="background: rgba(255,255,255,.03)"],
+html[data-theme="light"] main [style*="background: rgba(255,255,255,.04)"],
+html[data-theme="light"] main [style*="background: rgba(255,255,255,.05)"],
+html[data-theme="light"] main [style*="background: rgba(255,255,255,.06)"],
+html[data-theme="light"] main [style*="background: rgba(255,255,255,.08)"],
+html[data-theme="light"] main [style*="background: rgba(255,255,255,.10)"] {
+    background: var(--bg-glass) !important;
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border-subtle) !important;
+    box-shadow: 0 4px 20px -2px rgba(46, 61, 40, 0.06) !important;
+}
+
+/* Dropdown menus, modals, search suggestions */
+html[data-theme="light"] [style*="background: rgba(12,12,24,.97)"],
+html[data-theme="light"] [style*="background: rgba(10,10,20,.94)"],
+html[data-theme="light"] [style*="background: #0f0f1a"] {
+    background: var(--bg-surface) !important;
+    border-color: var(--border-medium) !important;
+    box-shadow: 0 16px 40px rgba(46, 61, 40, 0.12) !important;
+}
+
+/* Muted / Secondary text */
+html[data-theme="light"] [style*="rgba(148,163,184"],
+html[data-theme="light"] [style*="rgba(148, 163, 184"] {
+    color: var(--text-muted) !important;
+}
+
+html[data-theme="light"] [style*="rgba(255,255,255,.5)"],
+html[data-theme="light"] [style*="rgba(255,255,255,.55)"],
+html[data-theme="light"] [style*="rgba(255,255,255,.6)"],
+html[data-theme="light"] [style*="rgba(255,255,255,.65)"],
+html[data-theme="light"] [style*="rgba(255,255,255,.7)"],
+html[data-theme="light"] [style*="rgba(255, 255, 255, 0.5)"],
+html[data-theme="light"] [style*="rgba(255, 255, 255, 0.6)"],
+html[data-theme="light"] [style*="rgba(255, 255, 255, 0.7)"] {
+    color: var(--text-muted) !important;
+}
+
+/* ── Scrollbars ── */
 ::-webkit-scrollbar {
     width: 6px;
 }
 
 ::-webkit-scrollbar-track {
-    background: var(--color-surface);
+    background: var(--scrollbar-track);
 }
 
 ::-webkit-scrollbar-thumb {
-    background: var(--color-primary);
+    background: var(--scrollbar-thumb);
     border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+}
+
+/* ── Footer ── */
+footer {
+    background: var(--footer-bg) !important;
+    border-top: 1px solid var(--footer-border) !important;
+}
+
+footer h4 {
+    color: var(--footer-heading) !important;
+}
+
+footer a,
+footer p,
+footer span {
+    color: var(--footer-text);
+}
+
+footer a:hover {
+    color: var(--footer-text-hover) !important;
+}
+
+html[data-theme="light"] footer [style*="background: rgba(255,255,255,.05)"],
+html[data-theme="light"] footer [style*="background: rgba(99,102,241,.10)"],
+html[data-theme="light"] footer [style*="background: rgba(99,102,241,.07)"] {
+    background: rgba(250, 251, 247, 0.9) !important;
+    border-color: var(--border-subtle) !important;
+    color: var(--text-heading) !important;
 }

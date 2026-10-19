@@ -17,9 +17,16 @@ const required = (key) => {
 
 /* ── API URLs ── */
 export const API_BASE_URL   = required("VITE_API_BASE_URL");   // http://localhost:5000/api
-export const JIKAN_BASE_URL = required("VITE_JIKAN_BASE_URL"); // https://api.jikan.moe/v4
 
-/* ── Jikan has NO api key — it is free and public ──────────
+// Public Jikan API (api.jikan.moe) was sunset/discontinued in Oct 2026.
+// Tenrai (https://api.tenrai.org/v1) is the 100% schema-compatible drop-in successor.
+const rawJikanUrl = import.meta.env.VITE_JIKAN_BASE_URL;
+export const JIKAN_BASE_URL =
+  !rawJikanUrl || rawJikanUrl.includes("api.jikan.moe")
+    ? "https://api.tenrai.org/v1"
+    : rawJikanUrl;
+
+/* ── Free and public API (no API key required) ───────────────
    Rate limits:
      • 3 requests / second
      • 60 requests / minute

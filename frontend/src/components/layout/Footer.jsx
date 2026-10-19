@@ -40,13 +40,13 @@ const FooterLink = ({ to, icon, label }) => (
   <Link
     to={to}
     className="group flex items-center gap-2 text-sm transition-all duration-200"
-    style={{ color: "rgba(148,163,184,.55)" }}
-    onMouseEnter={e => { e.currentTarget.style.color = "#a5b4fc"; }}
-    onMouseLeave={e => { e.currentTarget.style.color = "rgba(148,163,184,.55)"; }}
+    style={{ color: "var(--text-muted, rgba(148,163,184,.55))" }}
+    onMouseEnter={e => { e.currentTarget.style.color = "var(--text-link, #a5b4fc)"; }}
+    onMouseLeave={e => { e.currentTarget.style.color = "var(--text-muted, rgba(148,163,184,.55))"; }}
   >
     <span
       className="flex-shrink-0 transition-colors duration-200"
-      style={{ color: "rgba(99,102,241,.40)" }}
+      style={{ color: "var(--accent-glow, rgba(99,102,241,.40))" }}
     >
       {icon}
     </span>
@@ -65,19 +65,19 @@ const SocialBtn = ({ href, icon, label }) => (
     className="flex items-center justify-center w-9 h-9 rounded-xl transition-all
                duration-200 hover:scale-110 active:scale-95"
     style={{
-      background: "rgba(255,255,255,.05)",
-      border:     "1px solid rgba(255,255,255,.08)",
-      color:      "rgba(148,163,184,.55)",
+      background: "var(--nav-btn-bg, rgba(255,255,255,.05))",
+      border:     "1px solid var(--border-subtle, rgba(255,255,255,.08))",
+      color:      "var(--text-muted, rgba(148,163,184,.55))",
     }}
     onMouseEnter={e => {
-      e.currentTarget.style.background = "rgba(99,102,241,.18)";
-      e.currentTarget.style.borderColor = "rgba(99,102,241,.35)";
-      e.currentTarget.style.color = "#a5b4fc";
+      e.currentTarget.style.background = "var(--nav-link-active-bg, rgba(99,102,241,.18))";
+      e.currentTarget.style.borderColor = "var(--border-accent, rgba(99,102,241,.35))";
+      e.currentTarget.style.color = "var(--text-link, #a5b4fc)";
     }}
     onMouseLeave={e => {
-      e.currentTarget.style.background = "rgba(255,255,255,.05)";
-      e.currentTarget.style.borderColor = "rgba(255,255,255,.08)";
-      e.currentTarget.style.color = "rgba(148,163,184,.55)";
+      e.currentTarget.style.background = "var(--nav-btn-bg, rgba(255,255,255,.05))";
+      e.currentTarget.style.borderColor = "var(--border-subtle, rgba(255,255,255,.08))";
+      e.currentTarget.style.color = "var(--text-muted, rgba(148,163,184,.55))";
     }}
   >
     {icon}
@@ -87,7 +87,7 @@ const SocialBtn = ({ href, icon, label }) => (
 const ColTitle = ({ children }) => (
   <h4
     className="text-xs font-black uppercase tracking-widest mb-4"
-    style={{ color: "rgba(165,180,252,.60)" }}
+    style={{ color: "var(--text-link, rgba(165,180,252,.60))" }}
   >
     {children}
   </h4>
@@ -103,8 +103,8 @@ const Footer = () => {
     <footer
       className="relative w-full overflow-hidden"
       style={{
-        background:  "#08080f",
-        borderTop:   "1px solid rgba(255,255,255,.06)",
+        background:  "var(--footer-bg, #08080f)",
+        borderTop:   "1px solid var(--border-subtle, rgba(255,255,255,.06))",
         marginTop:   80,
       }}
     >
@@ -153,28 +153,28 @@ const Footer = () => {
           >
             {/* logo */}
             <Link to="/" className="inline-flex items-center gap-2.5 mb-4 group">
-              <div
-                className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center
-                           transition-all duration-300 group-hover:scale-110 group-hover:rotate-3"
+              <img
+                src={logo}
+                alt="AniFind logo"
+                className="h-10 w-auto object-contain flex-shrink-0 transition-transform duration-300 group-hover:scale-105"
                 style={{
-                  boxShadow: "0 0 20px rgba(99,102,241,.40)",
-                  border:    "1px solid rgba(99,102,241,.30)",
+                  filter: "drop-shadow(0 2px 8px var(--logo-glow, rgba(99,102,241,.35)))",
+                }}
+              />
+              <span
+                className="text-lg font-black tracking-tight"
+                style={{
+                  color: "var(--logo-text, var(--text-heading, #ffffff))",
+                  fontFamily: "var(--font-heading, sans-serif)",
                 }}
               >
-                <img
-                  src={logo}
-                  alt="AniFind logo"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <span className="text-lg font-black text-white tracking-tight">
-                Ani<span style={{ color: "#a5b4fc" }}>Find</span>
+                Ani<span style={{ color: "var(--logo-accent, #a5b4fc)" }}>Find</span>
               </span>
             </Link>
 
             <p
               className="text-sm leading-relaxed mb-5"
-              style={{ color: "rgba(148,163,184,.50)", maxWidth: 240 }}
+              style={{ color: "var(--text-muted, rgba(148,163,184,.50))", maxWidth: 240 }}
             >
               Your ultimate anime discovery platform. Find, explore and track
               the anime you love.
@@ -191,11 +191,11 @@ const Footer = () => {
             <div
               className="inline-flex items-center gap-2 mt-5 px-3 py-1.5 rounded-xl"
               style={{
-                background: "rgba(255,255,255,.03)",
-                border:     "1px solid rgba(255,255,255,.07)",
+                background: "var(--nav-btn-bg, rgba(255,255,255,.03))",
+                border:     "1px solid var(--border-subtle, rgba(255,255,255,.07))",
               }}
             >
-              <span className="text-[10px]" style={{ color: "rgba(148,163,184,.38)" }}>
+              <span className="text-[10px]" style={{ color: "var(--text-subtle, rgba(148,163,184,.38))" }}>
                 Powered by
               </span>
               <a
@@ -203,7 +203,7 @@ const Footer = () => {
                 target="_blank"
                 rel="noreferrer"
                 className="flex items-center gap-1 text-[11px] font-bold transition-colors hover:text-indigo-300"
-                style={{ color: "#a5b4fc" }}
+                style={{ color: "var(--text-link, #a5b4fc)" }}
               >
                 Jikan API
                 <ExternalLink size={9} />
@@ -254,14 +254,14 @@ const Footer = () => {
           >
             <ColTitle>Data Source</ColTitle>
             <p className="text-sm leading-relaxed mb-4"
-               style={{ color: "rgba(148,163,184,.50)" }}>
+               style={{ color: "var(--text-muted, rgba(148,163,184,.50))" }}>
               All anime data is provided by the{" "}
               <a
                 href="https://jikan.moe"
                 target="_blank"
                 rel="noreferrer"
                 className="font-semibold transition-colors hover:text-indigo-300"
-                style={{ color: "#a5b4fc" }}
+                style={{ color: "var(--text-link, #a5b4fc)" }}
               >
                 Jikan REST API
               </a>
@@ -276,9 +276,9 @@ const Footer = () => {
               className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs
                          font-semibold transition-all duration-200 hover:scale-105"
               style={{
-                background: "rgba(99,102,241,.10)",
-                border:     "1px solid rgba(99,102,241,.22)",
-                color:      "#a5b4fc",
+                background: "var(--nav-btn-bg, rgba(99,102,241,.10))",
+                border:     "1px solid var(--border-subtle, rgba(99,102,241,.22))",
+                color:      "var(--text-link, #a5b4fc)",
               }}
             >
               <ExternalLink size={11} />
@@ -289,15 +289,15 @@ const Footer = () => {
             <div
               className="mt-5 p-3.5 rounded-2xl"
               style={{
-                background: "rgba(99,102,241,.07)",
-                border:     "1px solid rgba(99,102,241,.15)",
+                background: "var(--nav-btn-bg, rgba(99,102,241,.07))",
+                border:     "1px solid var(--border-subtle, rgba(99,102,241,.15))",
               }}
             >
-              <p className="text-[11px] font-bold text-white mb-0.5">
+              <p className="text-[11px] font-bold mb-0.5" style={{ color: "var(--text-heading, #fff)" }}>
                 Stay up to date
               </p>
               <p className="text-[10px] mb-2.5"
-                 style={{ color: "rgba(148,163,184,.45)" }}>
+                 style={{ color: "var(--text-muted, rgba(148,163,184,.45))" }}>
                 Follow us for new features &amp; anime drops.
               </p>
               <div className="flex gap-1.5">
@@ -313,7 +313,7 @@ const Footer = () => {
         <div
           className="w-full h-px"
           style={{
-            background: "linear-gradient(90deg,transparent,rgba(255,255,255,.07),transparent)",
+            background: "var(--border-subtle, rgba(255,255,255,.07))",
           }}
         />
 
@@ -327,7 +327,7 @@ const Footer = () => {
                      gap-3 py-5"
         >
           {/* copyright */}
-          <p className="text-xs" style={{ color: "rgba(148,163,184,.35)" }}>
+          <p className="text-xs" style={{ color: "var(--text-subtle, rgba(148,163,184,.35))" }}>
             © {year} AniFind. All rights reserved.
           </p>
 
@@ -342,9 +342,9 @@ const Footer = () => {
                 key={to}
                 to={to}
                 className="text-xs transition-colors duration-200"
-                style={{ color: "rgba(148,163,184,.30)" }}
-                onMouseEnter={e => { e.currentTarget.style.color = "#a5b4fc"; }}
-                onMouseLeave={e => { e.currentTarget.style.color = "rgba(148,163,184,.30)"; }}
+                style={{ color: "var(--text-subtle, rgba(148,163,184,.30))" }}
+                onMouseEnter={e => { e.currentTarget.style.color = "var(--text-link, #a5b4fc)"; }}
+                onMouseLeave={e => { e.currentTarget.style.color = "var(--text-subtle, rgba(148,163,184,.30))"; }}
               >
                 {label}
               </Link>

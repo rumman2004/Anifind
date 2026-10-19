@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Star, Trophy, TrendingUp, Crown, ChevronRight, LayoutGrid, List } from "lucide-react";
 import { animeService } from "../../services/animeService";
-import AnimeCard from "./AnimeCard";
+import AnimeCard from "../anime/AnimeCard";
 
 /* ══════════════════════════════════════════════════════════
    SKELETON
@@ -143,8 +143,8 @@ const TopAnimeRow = ({ anime, index }) => {
         onMouseLeave={() => setHovered(false)}
         className="flex items-center gap-3 p-3 sm:p-3.5 rounded-2xl transition-all duration-250 active:scale-[.99]"
         style={{
-          background: hovered ? "rgba(255,255,255,.07)" : "rgba(255,255,255,.04)",
-          border: `1px solid ${hovered ? m.bdr : "rgba(255,255,255,.07)"}`,
+          background: hovered ? "var(--bg-surface-hover, rgba(255,255,255,.07))" : "var(--bg-card, rgba(255,255,255,.04))",
+          border: `1px solid ${hovered ? m.bdr : "var(--border-subtle, rgba(255,255,255,.07))"}`,
           transform: hovered ? "scale(1.012)" : "scale(1)",
         }}
       >
@@ -163,7 +163,7 @@ const TopAnimeRow = ({ anime, index }) => {
         {/* thumbnail */}
         <div
           className="flex-shrink-0 rounded-xl overflow-hidden"
-          style={{ width: 42, height: 56, border: "1px solid rgba(255,255,255,.08)" }}
+          style={{ width: 42, height: 56, border: "1px solid var(--border-subtle, rgba(255,255,255,.08))" }}
         >
           {!imgErr ? (
             <img
@@ -176,7 +176,7 @@ const TopAnimeRow = ({ anime, index }) => {
           ) : (
             <div
               className="w-full h-full flex items-center justify-center text-2xl"
-              style={{ background: "rgba(255,255,255,.04)" }}
+              style={{ background: "var(--bg-surface, rgba(255,255,255,.04))" }}
             >
               🎬
             </div>
@@ -189,7 +189,7 @@ const TopAnimeRow = ({ anime, index }) => {
             className="font-bold line-clamp-1 transition-colors duration-200"
             style={{
               fontSize: "clamp(11px,2vw,13px)",
-              color: hovered ? "#a5b4fc" : "#fff",
+              color: hovered ? "var(--color-primary, #a5b4fc)" : "var(--text-heading, #fff)",
             }}
           >
             {title}
@@ -293,7 +293,7 @@ const TopRated = () => {
         }}
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-[1780px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16">
 
         {/* ════ HEADER ════ */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 sm:mb-12">
@@ -412,9 +412,9 @@ const TopRated = () => {
               >
                 {/* Top 5 */}
                 <Divider label="Top 5" />
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 lg:gap-5 mb-6 sm:mb-8">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 lg:gap-5 mb-6 sm:mb-8 items-stretch">
                   {topAnime.slice(0, 5).map((anime, i) => (
-                    <div key={anime.mal_id} className="relative">
+                    <div key={anime.mal_id} className="relative flex flex-col h-full">
                       {/* rank badge on top of card */}
                       <RankBadge  index={i} />
                       <RankRing   index={i} />
@@ -428,11 +428,11 @@ const TopRated = () => {
                   <>
                     <Divider label="#6 – #10" />
                     <div
-                      className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 lg:gap-5"
-                      style={{ opacity: 0.85 }}
+                      className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 lg:gap-5 items-stretch"
+                      style={{ opacity: 0.95 }}
                     >
                       {topAnime.slice(5).map((anime, i) => (
-                        <div key={anime.mal_id} className="relative">
+                        <div key={anime.mal_id} className="relative flex flex-col h-full">
                           <RankBadge index={i + 5} />
                           <AnimeCard anime={anime} index={i + 5} />
                         </div>

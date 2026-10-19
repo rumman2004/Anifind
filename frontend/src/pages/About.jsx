@@ -1,790 +1,630 @@
- import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect } from "react";
 import {
-  Tv, Database, Zap, Shield, Heart,
-  ChevronDown, Github, Globe,
-  Star, Search, BookMarked, Bell, Users,
-  Lock, RefreshCw, AlertTriangle, CheckCircle,
-  Mail, MessageCircle, FileText, Layers, BarChart2,
-  Sparkles, ArrowRight, Info, ShieldCheck, BadgeCheck,
-  Scale, Eye, Server, Clock, Wifi, XCircle,
-  HelpCircle, Cpu, TriangleAlert,
+  motion, AnimatePresence, MotionConfig,
+  useMotionValue, useSpring, useTransform,
+} from "framer-motion";
+import {
+  Database, Zap, Heart, ChevronDown, Github, Globe, Star, Search,
+  BookMarked, Bell, Users, Lock, RefreshCw, AlertTriangle, Mail,
+  FileText, Layers, BarChart2, Sparkles, Info, ShieldCheck, BadgeCheck,
+  Scale, Eye, Server, Clock, Wifi, TriangleAlert, Monitor, Cpu,
 } from "lucide-react";
 import logo from "../assets/logo.png";
-/* ══════════════════════════════════════════════════════════
-   DATA
-══════════════════════════════════════════════════════════ */
+import { JIKAN_BASE_URL } from "../utils/constants.js";
+
+/* ── page tokens ─────────────────────────────────────────── */
+const FOCUS = "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 dark:focus-visible:outline-indigo-400";
+
+/* ── data ───────────────────────────────────────────────── */
+const SECTIONS = [
+  { id: "overview",    label: "Overview" },
+  { id: "features",    label: "Features" },
+  { id: "data",        label: "Data source" },
+  { id: "reliability", label: "Reliability" },
+  { id: "trust",       label: "Trust" },
+  { id: "faq",         label: "FAQ" },
+  { id: "contact",     label: "Contact" },
+];
+
+const GLANCE = [
+  ["Anime titles",     "40,000+"],
+  ["Genres",           "41"],
+  ["Data provider",    "Tenrai API"],
+  ["Schema support",   "Jikan v4 / MAL"],
+  ["Pricing",          "100% Free"],
+  ["Ads & trackers",   "Zero"],
+  ["Cache freshness",  "5 min TTL"],
+];
+
 const FEATURES = [
-  { icon: <Search size={18} />,     color: "#a5b4fc", title: "Advanced Search",       desc: "Filter by genre, type, score, season, year range, rating and sort order simultaneously." },
-  { icon: <Star size={18} />,       color: "#fbbf24", title: "Top Rated Anime",        desc: "Browse the all-time highest-scored anime with dual grid and list views, including medal ranks." },
-  { icon: <BookMarked size={18} />, color: "#4ade80", title: "Favourites System",      desc: "Save any anime to your personal favourites list — synced to your account across devices." },
-  { icon: <Layers size={18} />,     color: "#f9a8d4", title: "Browse by Genre",        desc: "41 genres with lazy-loaded rows, staggered fetching, and per-genre colour theming." },
-  { icon: <Sparkles size={18} />,   color: "#fb923c", title: "Smart Suggestions",     desc: "Instant search suggestions with keyboard navigation, score badges and airing status dots." },
-  { icon: <BarChart2 size={18} />,  color: "#67e8f9", title: "Detailed Anime Pages",  desc: "Full anime detail pages with characters, staff, episodes, reviews, statistics and relations." },
-  { icon: <Bell size={18} />,       color: "#c4b5fd", title: "Season Tracking",       desc: "Currently airing and upcoming seasonal anime updated in real time via Jikan." },
-  { icon: <Users size={18} />,      color: "#86efac", title: "User Accounts",         desc: "Sign up, log in, and manage your profile. Favourites are private and account-bound." },
+  { icon: Search,     title: "Advanced search",     desc: "Filter by genre, media type, user score, season, year, rating and sorting simultaneously." },
+  { icon: Star,       title: "Top rated",           desc: "All-time highest rated anime series and films in responsive grid or list view with medal badges." },
+  { icon: BookMarked, title: "Favourites list",     desc: "Save anime titles to a private cloud list tied securely to your account." },
+  { icon: Layers,     title: "Browse by genre",     desc: "Explore all 41 anime genres with row-by-row deferred loading." },
+  { icon: Sparkles,   title: "Instant search",      desc: "Live search suggestions with score badges, English/Romaji titles, and airing status." },
+  { icon: BarChart2,  title: "Comprehensive info",  desc: "Detailed views with character rosters, staff, episode guides, trailers, and studio links." },
+  { icon: Bell,       title: "Seasonal schedules",  desc: "Currently airing and upcoming seasonal anime, fetched live via high-speed edge CDN." },
+  { icon: Users,      title: "User accounts",       desc: "Secure authentication, custom avatar letters, and saved preference management." },
 ];
 
 const API_DETAILS = [
-  { label: "API Name",    value: "Jikan REST API",            note: "" },
-  { label: "Version",     value: "v4",                        note: "" },
-  { label: "Base URL",    value: "https://api.jikan.moe/v4",  note: "All requests are queued through an internal service layer" },
-  { label: "Rate Limit",  value: "3 req / sec · 60 req / min", note: "Our queue enforces ≥1 s between requests with exponential back-off on 429" },
-  { label: "Cache TTL",   value: "5 minutes",                  note: "In-memory LRU cache (200-entry cap) prevents redundant calls" },
-  { label: "Max Retries", value: "5 (on 429 & 5xx)",           note: "Retry delay doubles each time: 2 s → 4 s → 8 s → 16 s → 32 s" },
-  { label: "Data Source", value: "MyAnimeList (unofficial)",   note: "Jikan scrapes MAL — we are not affiliated with MyAnimeList" },
-  { label: "Images",      value: "MyAnimeList CDN",            note: "Image availability depends on MAL CDN uptime; we do not host images" },
+  { label: "Data Provider",   value: "Tenrai Anime API", note: "High-throughput, resilient successor to legacy public Jikan endpoints." },
+  { label: "Schema Version",  value: "v1 (Jikan v4 & MyAnimeList compatible)", note: "Full drop-in schema compatibility ensures rock-solid data integrity." },
+  { label: "Base Endpoint",   value: JIKAN_BASE_URL, note: "Every request routes through AniFind's unified service and retry layer." },
+  { label: "Rate Limit",      value: "High-capacity edge CDN with 1 s queue pacing", note: "Internal request queue serialises calls to prevent dropped requests." },
+  { label: "Caching Layer",   value: "5 min TTL, 200-entry in-memory LRU cache", note: "Eliminates redundant calls and provides instant back/forward navigation." },
+  { label: "Retry Policy",    value: "Exponential back-off up to 5 attempts", note: "Recovers automatically from 429 throttling and temporary network drops." },
+  { label: "Data Origin",     value: "MyAnimeList Community Database", note: "Cleanly aggregated and indexed for fast querying. Unaffiliated with MyAnimeList." },
+  { label: "Image CDN",       value: "MyAnimeList CDN & Image Delivery Network", note: "High-resolution posters and artwork loaded straight from origin CDNs." },
 ];
 
-const CONTENT_VERIFICATION = [
-  {
-    group: "Data Origin & Accuracy",
-    icon: <Database size={16} />,
-    color: "#4ade80",
-    items: [
-      { status: "verified", text: "All anime metadata (titles, scores, episode counts, genres, synopses) originates exclusively from MyAnimeList via the Jikan REST API. We do not create, modify, or fabricate any content." },
-      { status: "verified", text: "Scores and rankings reflect real-time MAL community votes. Our 5-minute cache means displayed values are at most 5 minutes behind the live data." },
-      { status: "verified", text: "Episode counts, air dates and status (Airing / Finished / Upcoming) are fetched directly from Jikan and updated on every cache refresh." },
-      { status: "warning",  text: "Data accuracy is contingent on MyAnimeList's own records. Errors or omissions in MAL data will be reflected here — AniFind cannot correct upstream inaccuracies." },
-    ],
-  },
-  {
-    group: "Images & Media",
-    icon: <Eye size={16} />,
-    color: "#60a5fa",
-    items: [
-      { status: "verified", text: "All images are served directly from the MyAnimeList CDN (cdn.myanimelist.net). AniFind does not host, store, re-upload, or modify any images." },
-      { status: "verified", text: "Image URLs are provided by the Jikan API and point to the original MAL asset. If an image is removed from MAL it will no longer display on AniFind." },
-      { status: "warning",  text: "Some images may depict mature themes consistent with their MAL content rating. Ecchi or R 17+ content images are served as provided by MAL." },
-      { status: "info",     text: "If you encounter a broken image, it indicates the asset has been removed or moved on the MyAnimeList CDN — not a bug in AniFind." },
-    ],
-  },
-  {
-    group: "Affiliation & Trademarks",
-    icon: <Scale size={16} />,
-    color: "#fbbf24",
-    items: [
-      { status: "warning",  text: "AniFind is not affiliated with, endorsed by, sponsored by, or in any way officially connected to MyAnimeList LLC or any of its parent or sister companies." },
-      { status: "warning",  text: "AniFind is not affiliated with the Jikan project beyond using its public REST API under its open-source licence." },
-      { status: "warning",  text: "All anime titles, character names, logos, and artwork are trademarks or copyrights of their respective creators, studios, and distributors." },
-      { status: "info",     text: "AniFind is a fan-built discovery tool. No content is reproduced for commercial gain. All data access is read-only via a public, rate-limited API." },
-    ],
-  },
-  {
-    group: "User-Generated Content",
-    icon: <Users size={16} />,
-    color: "#c4b5fd",
-    items: [
-      { status: "verified", text: "AniFind does not allow users to submit, upload, or publish any content publicly. There are no reviews, comments, or forums on this platform." },
-      { status: "verified", text: "Favourites lists are strictly private and visible only to the authenticated account holder. No user data is ever displayed publicly." },
-      { status: "info",     text: "User account information (email, hashed password) is stored securely in MongoDB Atlas and is never shared with or sold to third parties." },
-    ],
-  },
-  {
-    group: "Content Ratings & Suitability",
-    icon: <ShieldCheck size={16} />,
-    color: "#fb923c",
-    items: [
-      { status: "verified", text: "AniFind surfaces Jikan's content rating classifications: G (All ages), PG, PG-13, R (17+), and R+ (Mild nudity). These map directly to MAL ratings." },
-      { status: "warning",  text: "Content rated R 17+ or higher is accessible via search filters. Parental guidance is strongly advised for younger users." },
-      { status: "info",     text: "AniFind does not implement age-gate verification. Responsibility for age-appropriate usage lies with the user and their guardian." },
-    ],
-  },
-  {
-    group: "DMCA & Takedowns",
-    icon: <FileText size={16} />,
-    color: "#f9a8d4",
-    items: [
-      { status: "info",     text: "Since AniFind does not host any media, DMCA takedown requests should be directed to MyAnimeList for images and to Jikan for metadata." },
-      { status: "info",     text: "If you believe specific content displayed on AniFind violates applicable law or your rights, contact us at the email below and we will respond within 5 business days." },
-      { status: "verified", text: "We are committed to cooperating fully with any legitimate legal request related to content displayed through our platform." },
-    ],
-  },
+const BACKOFF = [2, 4, 8, 16, 32];
+
+const FLOW = [
+  { icon: Monitor,  title: "Your browser",    desc: "Search query or page visit" },
+  { icon: Zap,      title: "LRU cache",       desc: "5 min TTL, 200 in-memory entries" },
+  { icon: Clock,    title: "Request queue",   desc: "1 s pacing & in-flight dedup" },
+  { icon: Globe,    title: "Tenrai API CDN",  desc: "High-speed edge with auto-retry" },
+  { icon: Database, title: "MyAnimeList",     desc: "Master anime database origin" },
 ];
 
 const RELIABILITY = [
-  {
-    icon: <RefreshCw size={16} />,
-    color: "#a5b4fc",
-    title: "Request Queue",
-    desc:  "All API calls are serialised with ≥1 s spacing. Simultaneous identical requests resolve to the same in-flight Promise — zero duplicate network calls.",
-  },
-  {
-    icon: <Zap size={16} />,
-    color: "#fbbf24",
-    title: "5-Minute Cache",
-    desc:  "Every response is cached in-memory (200-entry LRU cap). Repeat page visits feel instant; the network is only hit when the TTL expires.",
-  },
-  {
-    icon: <AlertTriangle size={16} />,
-    color: "#fb923c",
-    title: "Auto Retry",
-    desc:  "HTTP 429 and 5xx errors trigger exponential back-off: 2 s → 4 s → 8 s → 16 s → 32 s, up to 5 attempts before surfacing an error state.",
-  },
-  {
-    icon: <Wifi size={16} />,
-    color: "#4ade80",
-    title: "Graceful Errors",
-    desc:  "Every data section has its own error boundary with a retry button. A failure in one genre row never affects other rows or page sections.",
-  },
-  {
-    icon: <Clock size={16} />,
-    color: "#67e8f9",
-    title: "Staggered Loading",
-    desc:  "Genre rows load progressively with a 1-second stagger between each request, keeping well within Jikan's rate window at all times.",
-  },
-  {
-    icon: <Server size={16} />,
-    color: "#f9a8d4",
-    title: "In-flight Dedup",
-    desc:  "A shared in-flight Map ensures two simultaneous callers for the same resource share one Promise — no race conditions, no double billing.",
-  },
+  { icon: RefreshCw,     title: "Request queue",       desc: "Calls are paced at least 1 s apart to avoid rate spikes and browser stalls." },
+  { icon: Zap,           title: "5-minute LRU cache",  desc: "Repeated views and instant search results return immediately from memory." },
+  { icon: AlertTriangle, title: "Automatic back-off",  desc: "Exponential retry back-off handles 429 throttling and network hiccups gracefully." },
+  { icon: Wifi,          title: "Isolated errors",     desc: "Every section has localized error boundaries with individual reload buttons." },
+  { icon: Clock,         title: "Staggered loading",   desc: "Genre rows and media shelves load progressively to prevent bandwidth congestion." },
+  { icon: Server,        title: "In-flight dedup",     desc: "Identical concurrent queries share a single pending Promise to conserve bandwidth." },
+];
+
+const STATUS = {
+  verified: { icon: BadgeCheck,    color: "#22c55e", label: "Verified" },
+  warning:  { icon: TriangleAlert, color: "#f59e0b", label: "Note" },
+  info:     { icon: Info,          color: "#3b82f6", label: "Info" },
+};
+
+const TRUST = [
+  { group: "Data accuracy", icon: Database, items: [
+    ["verified", "All metadata (titles, synopsis, ratings, episodes, genres, rankings) is sourced from MyAnimeList via Tenrai's high-performance API."],
+    ["verified", "Scores and global rankings reflect community votes, synced through Tenrai's edge cache."],
+    ["verified", "Episode status, airing dates, and broadcast times are refreshed dynamically."],
+    ["warning",  "Accuracy reflects upstream MyAnimeList records. Upstream discrepancies appear here as well and cannot be altered by AniFind."],
+  ]},
+  { group: "Images & media", icon: Eye, items: [
+    ["verified", "Posters and banners load directly from official MyAnimeList CDNs. AniFind does not host or re-encode media."],
+    ["warning",  "Cover images may display themes aligned with the series' official age rating (e.g. Ecchi or R 17+)."],
+    ["info",     "A missing image indicates an asset relocated or pruned upstream on MyAnimeList."],
+  ]},
+  { group: "Affiliation", icon: Scale, items: [
+    ["warning", "AniFind is an independent fan project not affiliated with, endorsed by, or sponsored by MyAnimeList LLC or Jikan."],
+    ["warning", "All anime titles, artwork, character names, and franchise materials are copyright to their respective creators and studios."],
+    ["info",    "Built purely as a free discovery and tracking tool utilizing open, public anime APIs."],
+  ]},
+  { group: "User privacy", icon: Users, items: [
+    ["verified", "AniFind contains zero analytics trackers, telemetry scripts, or advertisement networks."],
+    ["verified", "Saved favourites are strictly private to the signed-in user account."],
+    ["info",     "Account credentials (email and bcrypt-hashed password) are stored securely in MongoDB Atlas."],
+  ]},
+  { group: "Age ratings", icon: ShieldCheck, items: [
+    ["verified", "Standard ratings are preserved verbatim: G, PG, PG-13, R-17+ and R+."],
+    ["warning",  "Mature titles (R-17+) can be discovered via filter controls. Parental discretion is advised."],
+    ["info",     "AniFind does not enforce an age gate; users and guardians are encouraged to use rating filters appropriately."],
+  ]},
+  { group: "Takedowns & contact", icon: FileText, items: [
+    ["info",     "AniFind hosts no copyrighted video or artwork. Media inquiries should be addressed to the respective upstream hosts."],
+    ["info",     "For platform inquiries, bug reports, or DMCA concerns, email us directly. We respond promptly."],
+    ["verified", "We cooperate fully and promptly with legitimate rights holders."],
+  ]},
 ];
 
 const FAQS = [
-  { q: "Is AniFind free to use?",               a: "Yes — AniFind is completely free. Creating an account is optional but required to save favourites." },
-  { q: "How up-to-date is the anime data?",      a: "Data comes from the Jikan API which scrapes MyAnimeList. Scores, episode counts and airing status update whenever Jikan refreshes. Our local cache is valid for 5 minutes, so data is at most 5 minutes stale." },
-  { q: "Why do some searches return slowly?",    a: "Jikan enforces a rate limit of 3 requests per second. AniFind queues all requests with at least 1 second between each. If you hit a 429 error the service automatically retries with exponential back-off — you may see a short delay." },
-  { q: "Are my favourites stored privately?",    a: "Yes. Favourites are stored in MongoDB Atlas under your user account and are never publicly visible. Only you can see your list when logged in." },
-  { q: "What genres are supported?",             a: "AniFind supports all 41 Jikan-recognised genres: Action, Adventure, Cars, Comedy, Dementia, Demons, Drama, Ecchi, Fantasy, Game, Harem, Historical, Horror, Isekai, Josei, Kids, Magic, Martial Arts, Mecha, Military, Music, Mystery, Parody, Police, Psychological, Romance, Samurai, School, Sci-Fi, Seinen, Shoujo, Shoujo Ai, Shounen, Shounen Ai, Slice of Life, Space, Sports, Super Power, Supernatural, Thriller, and Vampire." },
-  { q: "Can I use AniFind on mobile?",           a: "Absolutely. The entire interface is fully responsive — search, filters, genre rows, detail pages and favourites all adapt to any screen size from 320 px upward." },
-  { q: "Does AniFind use any tracking or ads?",  a: "No. AniFind contains no advertisements, no third-party analytics trackers, and no telemetry. The only external service called is the Jikan API." },
-  { q: "How is authentication handled?",         a: "Passwords are hashed with bcrypt (12 salt rounds) before storage. On login the server issues a signed JWT stored in an HTTP-only cookie. All protected routes validate this token server-side." },
-  { q: "Is the source code available?",          a: "Yes — the project is open source. You can find the repository linked in the Contact section below." },
-  { q: "What happens if Jikan is down?",         a: "AniFind will show per-section error states with retry buttons. Cached data (up to 5 minutes old) is still served where available, so recently visited pages degrade gracefully." },
+  { q: "Is AniFind free to use?",                     a: "Yes, 100% free with no paywalls or premium tiers. Creating an account is completely optional and only needed to save favourites across devices." },
+  { q: "Where does the anime data come from?",        a: "Data originates from the MyAnimeList database and is delivered through Tenrai API — a high-availability, Jikan v4-compatible REST provider with global edge caching." },
+  { q: "Why did the API provider change to Tenrai?",  a: "Legacy public Jikan endpoints suffered from severe connection timeouts and rate restrictions. Tenrai provides a robust drop-in replacement with enhanced uptime and lower latency." },
+  { q: "Why are some searches momentarily delayed?",   a: "To prevent upstream rate limits and conserve network performance, our client queue paces requests 1 second apart and automatically retries with exponential back-off." },
+  { q: "Are my saved favourites private?",            a: "Yes. Your favourites are stored securely in our database under your unique account and are never public or shared." },
+  { q: "Which genres can I explore?",                 a: "All 41 official anime genres, from Action, Adventure, and Sci-Fi to Slice of Life, Fantasy, and Supernatural." },
+  { q: "Does AniFind work smoothly on mobile?",       a: "Yes. Every page, card, search modal, and navigation element is fully responsive from small 320 px screens up to 4K displays." },
+  { q: "Are there any advertisements or tracking?",   a: "None. No banner ads, no popups, no Google Analytics, and no third-party tracking cookies whatsoever." },
+  { q: "How is user authentication secured?",         a: "Passwords are salted and hashed using bcrypt (12 rounds). Authentication tokens are signed JWTs stored in secure HTTP-only cookies validated on every protected action." },
+  { q: "What happens if the upstream API is down?",   a: "Each view has isolated error handling with one-click retry buttons, and our 5-minute client-side LRU cache continues serving previously loaded anime seamlessly." },
 ];
 
-/* ══════════════════════════════════════════════════════════
-   STATUS ICON
-══════════════════════════════════════════════════════════ */
-const STATUS_CONFIG = {
-  verified: { icon: <BadgeCheck size={14} />, color: "#4ade80",  label: "Verified"  },
-  warning:  { icon: <TriangleAlert size={14} />, color: "#fbbf24", label: "Note"     },
-  info:     { icon: <Info size={14} />,         color: "#60a5fa",  label: "Info"     },
-  error:    { icon: <XCircle size={14} />,      color: "#f87171",  label: "Error"    },
-};
+const LINKS = [
+  { icon: Github, label: "Source code",       desc: "Explore, star, or contribute to AniFind on GitHub.",  href: "https://github.com/rumman2004/Anifind", external: true },
+  { icon: Globe,  label: "Tenrai Anime API",  desc: "High-performance CDN anime API powering our queries.", href: "https://api.tenrai.org/v1",            external: true },
+  { icon: Mail,   label: "Email developer",   desc: "Reach out with questions, bugs, or feature ideas.",    href: "mailto:rumman.ahmed.work+query@gmail.com" },
+];
 
-const StatusIcon = ({ status }) => {
-  const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.info;
+/* ── scroll rope navigation indicator ──────────────────── */
+const Rope = () => {
+  const raw    = useMotionValue(0);
+  const smooth = useSpring(raw, { stiffness: 140, damping: 26, mass: 0.4 });
+  const head   = useTransform(smooth, v => `${v * 100}%`);
+  const [active, setActive] = useState(0);
+
+  useEffect(() => {
+    const update = () => {
+      const els = SECTIONS.map(s => document.getElementById(s.id));
+      if (els.some(e => !e)) return;
+      const tops = [
+        ...els.map(e => e.getBoundingClientRect().top + window.scrollY),
+        document.documentElement.scrollHeight,
+      ];
+      const y = window.scrollY + window.innerHeight * 0.35;
+      let i = 0;
+      while (i < SECTIONS.length - 1 && y >= tops[i + 1]) i++;
+      const t = Math.min(1, Math.max(0, (y - tops[i]) / (tops[i + 1] - tops[i])));
+      raw.set(Math.min(1, (i + t) / (SECTIONS.length - 1)));
+      setActive(i);
+    };
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, [raw]);
+
+  const go = id => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+
   return (
-    <span className="flex-shrink-0 mt-0.5" style={{ color: cfg.color }}>
-      {cfg.icon}
-    </span>
+    <nav aria-label="Page sections"
+         className="fixed left-1 xl:left-5 top-1/2 -translate-y-1/2 z-40 h-[50vh] w-3 pointer-events-none">
+      <div className="absolute left-[5px] top-0 bottom-0 w-px" style={{ background: "var(--border-subtle)" }} />
+      <motion.div
+        className="absolute left-[4px] top-0 bottom-0 w-[3px] rounded-full origin-top"
+        style={{ scaleY: smooth, background: "var(--btn-primary-bg, var(--color-primary))" }}
+      />
+      <motion.span
+        className="absolute left-0 w-2.5 h-2.5 -mt-[5px] rounded-full pointer-events-none"
+        style={{
+          top: head,
+          background: "var(--color-primary)",
+          boxShadow: "0 0 14px 3px var(--logo-glow, rgba(99,102,241,.6))"
+        }}
+      />
+      {SECTIONS.map((s, i) => {
+        const reached = i <= active;
+        return (
+          <button
+            key={s.id}
+            onClick={() => go(s.id)}
+            aria-label={s.label}
+            aria-current={i === active ? "true" : undefined}
+            className={`group pointer-events-auto absolute left-0 flex items-center rounded-full ${FOCUS}`}
+            style={{ top: `${(i / (SECTIONS.length - 1)) * 100}%`, transform: "translateY(-50%)" }}
+          >
+            <span
+              className="block w-[11px] h-[11px] rounded-full transition-colors duration-300"
+              style={{
+                background: reached ? "var(--color-primary)" : "var(--bg-main)",
+                border: `2px solid ${reached ? "var(--color-primary)" : "var(--border-medium)"}`,
+              }}
+            />
+            <span
+              className={`hidden xl:block ml-3 px-2.5 py-1 rounded-lg text-[11px] font-semibold whitespace-nowrap shadow-md transition-opacity ${
+                i === active ? "opacity-100" : "opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100"
+              }`}
+              style={{
+                background: "var(--bg-surface)",
+                border: "1px solid var(--border-medium)",
+                color: "var(--text-main)"
+              }}
+            >
+              {s.label}
+            </span>
+          </button>
+        );
+      })}
+    </nav>
   );
 };
 
-/* ══════════════════════════════════════════════════════════
-   REUSABLE ATOMS
-══════════════════════════════════════════════════════════ */
-const SectionHeading = ({ icon: Icon, iconColor, label, title, subtitle }) => (
-  <div className="flex flex-col items-center text-center gap-2 mb-8 sm:mb-12">
-    <div
-      className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center mb-1"
-      style={{
-        background: `${iconColor}18`,
-        border:     `1px solid ${iconColor}30`,
-        boxShadow:  `0 0 24px ${iconColor}18`,
-      }}
-    >
-      <Icon size={20} style={{ color: iconColor }} />
-    </div>
-    {label && (
-      <span className="text-[10px] uppercase tracking-widest font-bold"
-            style={{ color: `${iconColor}99` }}>
-        {label}
-      </span>
-    )}
-    <h2 className="font-black text-white"
-        style={{ fontSize: "clamp(20px,4vw,30px)", letterSpacing: "-0.025em" }}>
+/* ── layout atoms ───────────────────────────────────────── */
+const Inner = ({ children, className = "" }) => (
+  <div className={`mx-auto w-full max-w-[1600px] px-5 sm:px-8 lg:px-12 ${className}`}>{children}</div>
+);
+
+const Section = ({ id, children }) => (
+  <section id={id} className="py-16 sm:py-24" style={{ borderTop: "1px solid var(--border-subtle)" }}>
+    <Inner>{children}</Inner>
+  </section>
+);
+
+const Heading = ({ title, sub }) => (
+  <div className="mb-10 sm:mb-14 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+    <h2 className="font-extrabold"
+        style={{
+          fontSize: "clamp(26px,3.6vw,42px)",
+          letterSpacing: "-0.03em",
+          lineHeight: 1.1,
+          color: "var(--text-heading)"
+        }}>
       {title}
     </h2>
-    {subtitle && (
-      <p className="text-sm sm:text-base max-w-xl" style={{ color: "rgba(148,163,184,.55)" }}>
-        {subtitle}
-      </p>
-    )}
+    {sub && <p className="text-sm sm:text-base max-w-xl" style={{ color: "var(--text-muted)" }}>{sub}</p>}
   </div>
 );
 
-const Divider = ({ colorA = "rgba(99,102,241,.25)", colorB }) => (
-  <div
-    className="my-16 sm:my-24"
-    style={{
-      height: 1,
-      background: colorB
-        ? `linear-gradient(to right, transparent, ${colorA}, ${colorB}, transparent)`
-        : `linear-gradient(to right, transparent, ${colorA}, transparent)`,
-    }}
-  />
+/* A grid whose 1px gaps show the hairline border colour between cells */
+const RuledGrid = ({ cols, children }) => (
+  <div className={`grid gap-px rounded-2xl overflow-hidden ${cols}`}
+       style={{ background: "var(--border-subtle)", border: "1px solid var(--border-subtle)" }}>
+    {children}
+  </div>
 );
 
-/* ══════════════════════════════════════════════════════════
-   FAQ ACCORDION
-══════════════════════════════════════════════════════════ */
-const FaqItem = ({ faq, index }) => {
-  const [open, setOpen] = useState(false);
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: index * 0.035 }}
-      className="rounded-2xl overflow-hidden"
-      style={{
-        background:  open ? "rgba(99,102,241,.07)" : "rgba(255,255,255,.03)",
-        border:      `1px solid ${open ? "rgba(99,102,241,.28)" : "rgba(255,255,255,.07)"}`,
-        transition:  "background .2s, border-color .2s",
-      }}
-    >
-      <button
-        onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left"
-      >
-        <div className="flex items-center gap-2.5 min-w-0">
-          <HelpCircle
-            size={14}
-            className="flex-shrink-0"
-            style={{ color: open ? "#a5b4fc" : "rgba(148,163,184,.30)" }}
+/* ── back-off graph ─────────────────────────────────────── */
+const BackoffChart = () => (
+  <div className="rounded-2xl p-5 sm:p-6 h-full flex flex-col justify-between"
+       style={{ border: "1px solid var(--border-subtle)", background: "var(--bg-card)" }}>
+    <div>
+      <h3 className="font-bold text-base" style={{ color: "var(--text-heading)" }}>Retry back-off curve</h3>
+      <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
+        Request spacing doubles after each failed response. Worst-case total wait: 62 s.
+      </p>
+    </div>
+    <div className="mt-8 flex items-end gap-3 h-[176px]">
+      {BACKOFF.map((d, i) => (
+        <div key={d} className="flex-1 flex flex-col items-center justify-end gap-2">
+          <span className="text-xs font-bold tabular-nums" style={{ color: "var(--text-heading)" }}>{d} s</span>
+          <motion.div
+            className="w-full rounded-t-md"
+            initial={{ height: 0 }}
+            whileInView={{ height: (d / 32) * 136 }}
+            viewport={{ once: true, margin: "-40px" }}
+            transition={{ duration: 0.7, delay: i * 0.1, ease: "easeOut" }}
+            style={{
+              background: "linear-gradient(to top, var(--nav-link-active-bg, rgba(99,102,241,.2)), var(--color-primary, #818cf8))"
+            }}
           />
-          <span
-            className="font-semibold text-sm sm:text-base leading-snug"
-            style={{ color: open ? "#a5b4fc" : "#fff" }}
-          >
-            {faq.q}
-          </span>
         </div>
-        <motion.div
-          animate={{ rotate: open ? 180 : 0 }}
-          transition={{ duration: 0.2 }}
-          className="flex-shrink-0"
-        >
-          <ChevronDown size={15} style={{ color: open ? "#a5b4fc" : "rgba(148,163,184,.35)" }} />
-        </motion.div>
-      </button>
-
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.22 }}
-            className="overflow-hidden"
-          >
-            <p className="px-5 pb-5 text-sm leading-relaxed pl-[2.6rem]"
-               style={{ color: "rgba(148,163,184,.65)" }}>
-              {faq.a}
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
-  );
-};
-
-/* ══════════════════════════════════════════════════════════
-   CONTENT VERIFICATION GROUP
-══════════════════════════════════════════════════════════ */
-const VerificationGroup = ({ group: g, index }) => {
-  const [open, setOpen] = useState(index === 0);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 14 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: index * 0.05 }}
-      className="rounded-2xl overflow-hidden"
-      style={{
-        background: "rgba(255,255,255,.025)",
-        border: `1px solid ${open ? `${g.color}30` : "rgba(255,255,255,.07)"}`,
-        transition: "border-color .25s",
-      }}
-    >
-      {/* group header */}
-      <button
-        onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between gap-3 px-5 py-4"
-      >
-        <div className="flex items-center gap-3 min-w-0">
-          <div
-            className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-            style={{
-              background: `${g.color}14`,
-              border:     `1px solid ${g.color}28`,
-              color:       g.color,
-            }}
-          >
-            {g.icon}
-          </div>
-          <span className="font-bold text-sm sm:text-base text-white truncate">
-            {g.group}
-          </span>
-          <span
-            className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full flex-shrink-0"
-            style={{
-              background: `${g.color}12`,
-              color:       g.color,
-              border:     `1px solid ${g.color}25`,
-            }}
-          >
-            {g.items.length} items
-          </span>
-        </div>
-        <motion.div
-          animate={{ rotate: open ? 180 : 0 }}
-          transition={{ duration: 0.2 }}
-          className="flex-shrink-0"
-        >
-          <ChevronDown size={15} style={{ color: open ? g.color : "rgba(148,163,184,.35)" }} />
-        </motion.div>
-      </button>
-
-      {/* items */}
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="overflow-hidden"
-          >
-            <div
-              className="px-5 pb-5 space-y-3"
-              style={{ borderTop: "1px solid rgba(255,255,255,.06)" }}
-            >
-              <div className="pt-4 space-y-3">
-                {g.items.map((item, i) => {
-                  const cfg = STATUS_CONFIG[item.status];
-                  return (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.04 }}
-                      className="flex items-start gap-3 p-3 rounded-xl"
-                      style={{
-                        background: `${cfg.color}08`,
-                        border:     `1px solid ${cfg.color}18`,
-                      }}
-                    >
-                      <StatusIcon status={item.status} />
-                      <div className="flex-1 min-w-0">
-                        <span
-                          className="text-[9px] font-black uppercase tracking-wider mr-2"
-                          style={{ color: cfg.color }}
-                        >
-                          {cfg.label}
-                        </span>
-                        <p className="text-xs sm:text-sm leading-relaxed mt-0.5"
-                           style={{ color: "rgba(148,163,184,.68)" }}>
-                          {item.text}
-                        </p>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
-  );
-};
-
-/* ══════════════════════════════════════════════════════════
-   ABOUT PAGE
-══════════════════════════════════════════════════════════ */
-const About = () => (
-  <div className="min-h-screen" style={{ background: "#0a0a14" }}>
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20">
-
-      {/* ════ HERO ════ */}
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="text-center mb-16 sm:mb-24"
-      >
-        {/* logo */}
-        <div className="flex justify-center mb-6">
-          <div
-            className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl flex items-center justify-center relative"
-            style={{
-            background: "linear-gradient(135deg,rgba(99,102,241,.30),rgba(168,85,247,.20))",
-            border:     "1px solid rgba(99,102,241,.35)",
-            boxShadow:  "0 0 60px rgba(99,102,241,.25),0 0 120px rgba(99,102,241,.10)",
-            }}
-          >
-            <img src={logo} alt="AniFind Logo" className="w-19 h-19 object-contain rounded-2xl" />
-            <motion.div
-              className="absolute w-3 h-3 rounded-full"
-              style={{
-                background: "linear-gradient(135deg,#fbbf24,#f59e0b)",
-                top: -4, right: -4,
-                boxShadow:  "0 0 8px rgba(251,191,36,.7)",
-              }}
-              animate={{ scale: [1, 1.3, 1] }}
-              transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-            />
-          </div>
-        </div>
-
-        <div className="flex items-center justify-center gap-2 mb-3">
-          <span
-            className="text-[10px] uppercase tracking-widest font-bold px-2.5 py-1 rounded-full"
-            style={{
-              background: "rgba(99,102,241,.14)",
-              color:       "#a5b4fc",
-              border:      "1px solid rgba(99,102,241,.28)",
-            }}
-          >
-            Open Source · Free · No Ads
-          </span>
-        </div>
-
-        <h1
-          className="font-black text-white mb-4"
-          style={{ fontSize: "clamp(32px,7vw,60px)", letterSpacing: "-0.03em", lineHeight: 1.05 }}
-        >
-          About{" "}
-          <span style={{
-            background:            "linear-gradient(135deg,#a5b4fc,#818cf8,#c4b5fd)",
-            WebkitBackgroundClip:  "text",
-            WebkitTextFillColor:   "transparent",
-          }}>
-            AniFind
-          </span>
-        </h1>
-
-        <p
-          className="text-base sm:text-lg leading-relaxed mx-auto mb-8"
-          style={{ color: "rgba(148,163,184,.62)", maxWidth: 560 }}
-        >
-          AniFind is your ultimate anime discovery platform — search 40 000+ titles,
-          explore by genre, track what's airing this season, and save your favourites,
-          all from one beautifully designed interface.
-        </p>
-
-        {/* stat pills */}
-        <div className="flex flex-wrap items-center justify-center gap-3">
-          {[
-            { label: "40 000+ Anime", color: "#a5b4fc" },
-            { label: "41 Genres",     color: "#4ade80" },
-            { label: "Free Forever",  color: "#fbbf24" },
-            { label: "No Ads Ever",   color: "#f9a8d4" },
-            { label: "Open Source",   color: "#67e8f9" },
-          ].map(({ label, color }) => (
-            <span
-              key={label}
-              className="text-xs font-bold px-3 py-1.5 rounded-full"
-              style={{ background: `${color}12`, color, border: `1px solid ${color}28` }}
-            >
-              {label}
-            </span>
-          ))}
-        </div>
-      </motion.div>
-
-      {/* ════ FEATURES ════ */}
-      <SectionHeading
-        icon={Sparkles}
-        iconColor="rgba(251,191,36,1)"
-        label="What AniFind offers"
-        title="Everything you need"
-        subtitle="A complete toolkit for discovering, tracking and organising your anime life."
-      />
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-        {FEATURES.map((f, i) => (
-          <motion.div
-            key={f.title}
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: i * 0.05 }}
-            className="flex items-start gap-4 p-4 sm:p-5 rounded-2xl transition-all duration-200 hover:scale-[1.02]"
-            style={{ background: "rgba(255,255,255,.03)", border: "1px solid rgba(255,255,255,.07)" }}
-            onMouseEnter={e => (e.currentTarget.style.borderColor = `${f.color}35`)}
-            onMouseLeave={e => (e.currentTarget.style.borderColor = "rgba(255,255,255,.07)")}
-          >
-            <div
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: `${f.color}14`, border: `1px solid ${f.color}28`, color: f.color }}
-            >
-              {f.icon}
-            </div>
-            <div className="min-w-0">
-              <h3 className="font-bold text-white text-sm sm:text-base mb-0.5">{f.title}</h3>
-              <p className="text-xs sm:text-sm leading-relaxed" style={{ color: "rgba(148,163,184,.55)" }}>
-                {f.desc}
-              </p>
-            </div>
-          </motion.div>
-        ))}
-      </div>
-
-      <Divider />
-
-      {/* ════ API DETAILS ════ */}
-      <SectionHeading
-        icon={Globe}
-        iconColor="rgba(34,197,94,1)"
-        label="Data source"
-        title="Jikan API Details"
-        subtitle="All anime data is sourced from the Jikan REST API — an open-source, unofficial MyAnimeList scraper."
-      />
-
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        className="rounded-2xl overflow-hidden mb-6"
-        style={{ border: "1px solid rgba(255,255,255,.08)" }}
-      >
-        {API_DETAILS.map((row, i) => (
-          <div
-            key={row.label}
-            className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-6 px-5 py-4"
-            style={{
-              background:   i % 2 === 0 ? "rgba(255,255,255,.025)" : "rgba(255,255,255,.015)",
-              borderBottom: i < API_DETAILS.length - 1 ? "1px solid rgba(255,255,255,.05)" : "none",
-            }}
-          >
-            <span
-              className="text-xs font-bold uppercase tracking-wider flex-shrink-0 sm:w-36"
-              style={{ color: "rgba(148,163,184,.45)" }}
-            >
-              {row.label}
-            </span>
-            <div className="flex-1 min-w-0">
-              <span className="text-sm font-semibold text-white">{row.value}</span>
-              {row.note && (
-                <p className="text-xs mt-0.5" style={{ color: "rgba(148,163,184,.42)" }}>
-                  {row.note}
-                </p>
-              )}
-            </div>
-          </div>
-        ))}
-      </motion.div>
-
-      {/* reliability cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-        {RELIABILITY.map((c, i) => (
-          <motion.div
-            key={c.title}
-            initial={{ opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: i * 0.06 }}
-            className="flex items-start gap-3 p-4 rounded-2xl transition-all duration-200 hover:scale-[1.02]"
-            style={{ background: `${c.color}07`, border: `1px solid ${c.color}18` }}
-          >
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
-              style={{ background: `${c.color}14`, color: c.color, border: `1px solid ${c.color}25` }}
-            >
-              {c.icon}
-            </div>
-            <div>
-              <p className="text-sm font-bold text-white mb-0.5">{c.title}</p>
-              <p className="text-xs leading-relaxed" style={{ color: "rgba(148,163,184,.52)" }}>
-                {c.desc}
-              </p>
-            </div>
-          </motion.div>
-        ))}
-      </div>
-
-      <Divider colorA="rgba(34,197,94,.20)" colorB="rgba(99,102,241,.20)" />
-
-      {/* ════ CONTENT VERIFICATION ════ */}
-      <SectionHeading
-        icon={ShieldCheck}
-        iconColor="rgba(74,222,128,1)"
-        label="Transparency & Trust"
-        title="Content Verification"
-        subtitle="A full, honest breakdown of every content-related policy — what we verify, what we disclaim, and what you should know."
-      />
-
-      {/* legend */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        className="flex flex-wrap items-center justify-center gap-3 mb-6"
-      >
-        {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
-          <span
-            key={key}
-            className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
-            style={{
-              background: `${cfg.color}10`,
-              color:       cfg.color,
-              border:     `1px solid ${cfg.color}22`,
-            }}
-          >
-            {cfg.icon} {cfg.label}
-          </span>
-        ))}
-      </motion.div>
-
-      <div className="space-y-3">
-        {CONTENT_VERIFICATION.map((group, i) => (
-          <VerificationGroup key={group.group} group={group} index={i} />
-        ))}
-      </div>
-
-      {/* security note */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        className="mt-4 flex items-start gap-4 p-5 rounded-2xl"
-        style={{
-          background: "rgba(59,130,246,.07)",
-          border:     "1px solid rgba(59,130,246,.18)",
-        }}
-      >
-        <div
-          className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-          style={{ background: "rgba(59,130,246,.14)", border: "1px solid rgba(59,130,246,.25)" }}
-        >
-          <Lock size={16} style={{ color: "#60a5fa" }} />
-        </div>
-        <div>
-          <p className="text-sm font-bold text-white mb-0.5">Security & Privacy</p>
-          <p className="text-xs sm:text-sm leading-relaxed" style={{ color: "rgba(148,163,184,.58)" }}>
-            Passwords are hashed with bcrypt (12 salt rounds) — plaintext passwords are never stored.
-            Sessions use signed JWTs in HTTP-only cookies (XSS-safe). No third-party analytics,
-            ad networks, or telemetry scripts are loaded. AniFind does not sell, rent, or share
-            any user data with any third party, ever.
-          </p>
-        </div>
-      </motion.div>
-
-      <Divider colorA="rgba(74,222,128,.20)" colorB="rgba(168,85,247,.20)" />
-
-      {/* ════ FAQ ════ */}
-      <SectionHeading
-        icon={MessageCircle}
-        iconColor="rgba(168,85,247,1)"
-        label="Got questions?"
-        title="Frequently Asked"
-        subtitle="Everything you might want to know about AniFind — answered honestly."
-      />
-
-      <div className="space-y-2.5">
-        {FAQS.map((faq, i) => (
-          <FaqItem key={i} faq={faq} index={i} />
-        ))}
-      </div>
-
-      <Divider colorA="rgba(168,85,247,.20)" colorB="rgba(236,72,153,.20)" />
-
-      {/* ════ CONTACT ════ */}
-      <SectionHeading
-        icon={Mail}
-        iconColor="rgba(236,72,153,1)"
-        label="Get in touch"
-        title="Contact & Links"
-      />
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-12">
-        {[
-          {
-            icon:  <Github size={20} />,
-            color: "#e2e8f0",
-            glow:  "rgba(226,232,240,.12)",
-            label: "Source Code",
-            desc:  "Browse, fork or contribute on GitHub",
-            href:  "https://github.com/rumman2004/Anifind",
-            cta:   "View on GitHub",
-          },
-          {
-            icon:  <Globe size={20} />,
-            color: "#4ade80",
-            glow:  "rgba(74,222,128,.12)",
-            label: "Jikan API",
-            desc:  "Official Jikan documentation",
-            href:  "https://docs.api.jikan.moe",
-            cta:   "API Docs",
-          },
-          {
-            icon:  <Mail size={20} />,
-            color: "#f9a8d4",
-            glow:  "rgba(249,168,212,.12)",
-            label: "Contact",
-            desc:  "Questions, bugs or content concerns",
-            href:  "mailto:rumman.ahmed.work+query@gmail.com",
-            cta:   "Send Email",
-          },
-        ].map((link, i) => (
-          <motion.a
-            key={link.label}
-            href={link.href}
-            target="_blank"
-            rel="noreferrer"
-            initial={{ opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: i * 0.08 }}
-            className="flex flex-col items-center gap-3 p-5 sm:p-6 rounded-2xl text-center
-                       transition-all duration-200 hover:scale-[1.03] active:scale-[.98] group"
-            style={{
-              background:    "rgba(255,255,255,.03)",
-              border:        "1px solid rgba(255,255,255,.08)",
-              textDecoration:"none",
-            }}
-            onMouseEnter={e => (e.currentTarget.style.borderColor = `${link.color}35`)}
-            onMouseLeave={e => (e.currentTarget.style.borderColor = "rgba(255,255,255,.08)")}
-          >
-            <div
-              className="w-11 h-11 rounded-2xl flex items-center justify-center transition-all
-                         duration-200 group-hover:scale-110"
-              style={{ background: link.glow, border: `1px solid ${link.color}25`, color: link.color }}
-            >
-              {link.icon}
-            </div>
-            <div>
-              <p className="font-bold text-white text-sm mb-0.5">{link.label}</p>
-              <p className="text-xs" style={{ color: "rgba(148,163,184,.50)" }}>{link.desc}</p>
-            </div>
-            <span
-              className="flex items-center gap-1 text-xs font-semibold mt-auto
-                         transition-all group-hover:gap-2"
-              style={{ color: link.color }}
-            >
-              {link.cta} <ArrowRight size={11} />
-            </span>
-          </motion.a>
-        ))}
-      </div>
-
-      {/* footer note */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        className="text-center"
-      >
-        <div className="flex items-center justify-center gap-1.5 mb-2">
-          <Heart size={13} style={{ color: "#ec4899", fill: "#ec4899" }} />
-          <p className="text-xs font-semibold" style={{ color: "rgba(148,163,184,.45)" }}>
-            Built with love for the anime community
-          </p>
-        </div>
-        <p className="text-[10px]" style={{ color: "rgba(148,163,184,.28)" }}>
-          AniFind is not affiliated with MyAnimeList, Jikan, or any anime studio.
-          All trademarks belong to their respective owners.
-        </p>
-      </motion.div>
-
+      ))}
+    </div>
+    <div className="flex gap-3 mt-3 pt-3" style={{ borderTop: "1px solid var(--border-subtle)" }}>
+      {BACKOFF.map((d, i) => (
+        <span key={d} className="flex-1 text-center text-[11px] font-medium" style={{ color: "var(--text-subtle)" }}>
+          Retry {i + 1}
+        </span>
+      ))}
     </div>
   </div>
 );
+
+/* ── request flow ───────────────────────────────────────── */
+const Flow = () => (
+  <div className="relative grid gap-5 md:grid-cols-5 mb-12 sm:mb-16">
+    <motion.div
+      aria-hidden
+      className="hidden md:block absolute top-[26px] left-[10%] right-[10%] h-px origin-left"
+      initial={{ scaleX: 0 }}
+      whileInView={{ scaleX: 1 }}
+      viewport={{ once: true, margin: "-80px" }}
+      transition={{ duration: 1.2, ease: "easeInOut" }}
+      style={{ background: "var(--accent-gradient, linear-gradient(to right, #6366f1, #c4b5fd))" }}
+    />
+    {FLOW.map(({ icon: Icon, title, desc }, i) => (
+      <div key={title} className="relative flex md:flex-col items-center gap-4 md:gap-3 md:text-center">
+        <div className="relative z-10 grid place-items-center w-[52px] h-[52px] rounded-full shrink-0 shadow-sm"
+             style={{
+               background: "var(--bg-surface)",
+               border: `1px solid ${i === 0 || i === FLOW.length - 1 ? "var(--border-subtle)" : "var(--border-accent)"}`,
+               color: "var(--color-primary)"
+             }}>
+          <Icon size={20} />
+        </div>
+        <div>
+          <p className="font-semibold text-sm" style={{ color: "var(--text-heading)" }}>{title}</p>
+          <p className="text-xs mt-0.5" style={{ color: "var(--text-subtle)" }}>{desc}</p>
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
+/* ── trust tabs ─────────────────────────────────────────── */
+const Trust = () => {
+  const [tab, setTab] = useState(0);
+  const g = TRUST[tab];
+
+  return (
+    <div className="grid gap-5 lg:grid-cols-[280px_1fr]">
+      <div role="tablist" aria-label="Content policies"
+           className="flex lg:flex-col gap-2 overflow-x-auto pb-1 lg:pb-0 -mx-5 px-5 sm:mx-0 sm:px-0">
+        {TRUST.map((x, i) => {
+          const on = i === tab;
+          const Icon = x.icon;
+          return (
+            <button
+              key={x.group}
+              role="tab"
+              aria-selected={on}
+              onClick={() => setTab(i)}
+              className={`shrink-0 flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-left whitespace-nowrap transition-colors ${FOCUS}`}
+              style={{
+                background: on ? "var(--nav-link-active-bg, rgba(99,102,241,.12))" : "var(--bg-card, transparent)",
+                border: `1px solid ${on ? "var(--border-accent, rgba(99,102,241,.4))" : "var(--border-subtle)"}`,
+                color: on ? "var(--text-heading)" : "var(--text-muted)",
+              }}
+            >
+              <Icon size={16} style={{ color: on ? "var(--color-primary)" : "currentColor" }} />
+              {x.group}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="rounded-2xl p-5 sm:p-8 min-h-[340px]"
+           style={{ border: "1px solid var(--border-subtle)", background: "var(--bg-card)" }}>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={tab}
+            role="tabpanel"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+          >
+            <h3 className="font-bold text-lg mb-5" style={{ color: "var(--text-heading)" }}>{g.group}</h3>
+            <ul className="divide-y" style={{ borderColor: "var(--border-subtle)" }}>
+              {g.items.map(([status, text], i) => {
+                const cfg = STATUS[status];
+                const Icon = cfg.icon;
+                return (
+                  <li key={i} className="flex gap-3 py-4 first:pt-0 last:pb-0" style={{ borderTopColor: "var(--border-subtle)" }}>
+                    <Icon size={18} className="shrink-0 mt-0.5" style={{ color: cfg.color }} />
+                    <div className="min-w-0">
+                      <span className="text-xs font-bold uppercase tracking-wider" style={{ color: cfg.color }}>{cfg.label}</span>
+                      <p className="text-sm leading-relaxed mt-0.5" style={{ color: "var(--text-main)" }}>{text}</p>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+};
+
+/* ── faq ────────────────────────────────────────────────── */
+const Faq = ({ q, a }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+        className={`w-full flex items-center justify-between gap-4 py-4 text-left transition-colors ${FOCUS}`}
+      >
+        <span className="font-semibold text-sm sm:text-base"
+              style={{ color: open ? "var(--color-primary)" : "var(--text-heading)" }}>
+          {q}
+        </span>
+        <ChevronDown size={16} className="shrink-0 transition-transform duration-200"
+                     style={{ transform: open ? "rotate(180deg)" : "none", color: "var(--text-muted)" }} />
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <p className="pb-4 pr-8 text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>{a}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+/* ── page ───────────────────────────────────────────────── */
+const About = () => {
+  const go = id => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  const half = Math.ceil(FAQS.length / 2);
+
+  return (
+    <MotionConfig reducedMotion="user">
+      <main className="min-h-screen xl:pl-20 transition-colors duration-300"
+            style={{ background: "var(--bg-main)", color: "var(--text-main)" }}>
+        <Rope />
+
+        {/* Overview Hero */}
+        <section id="overview" className="relative overflow-hidden pt-20 pb-16 sm:pt-28 sm:pb-24">
+          <div aria-hidden className="absolute inset-0 pointer-events-none"
+               style={{
+                 background: "radial-gradient(ellipse 55% 50% at 15% 0%, var(--glow-radial, rgba(99,102,241,.16)), transparent 70%)"
+               }} />
+          <Inner className="relative grid gap-12 lg:grid-cols-[1.2fr_1fr] lg:gap-20 items-center">
+            <div>
+              <img src={logo} alt="AniFind logo" className="h-14 w-auto object-contain mb-6 drop-shadow-md" />
+              <h1 className="font-extrabold"
+                  style={{
+                    fontSize: "clamp(36px,6vw,72px)",
+                    letterSpacing: "-0.035em",
+                    lineHeight: 1.03,
+                    color: "var(--text-heading)"
+                  }}>
+                Find, track and save the anime you love.
+              </h1>
+              <p className="mt-6 text-base sm:text-lg leading-relaxed max-w-xl" style={{ color: "var(--text-muted)" }}>
+                Search 40,000+ titles, browse 41 genres, follow the current season, and
+                maintain your private favourites list. Powered by high-speed Tenrai CDN data with real-time edge caching.
+              </p>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <button onClick={() => go("features")}
+                        className={`px-5 py-3 rounded-xl text-sm font-semibold transition-all hover:scale-105 active:scale-95 ${FOCUS}`}
+                        style={{
+                          background: "var(--btn-primary-bg)",
+                          color: "var(--btn-primary-text)",
+                          boxShadow: "var(--btn-primary-glow)"
+                        }}>
+                  See features
+                </button>
+                <a href="https://github.com/rumman2004/Anifind" target="_blank" rel="noreferrer"
+                   className={`inline-flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all hover:scale-105 active:scale-95 ${FOCUS}`}
+                   style={{
+                     background: "var(--nav-btn-bg)",
+                     border: "1px solid var(--border-medium)",
+                     color: "var(--text-main)"
+                   }}>
+                  <Github size={16} /> View on GitHub
+                </a>
+              </div>
+            </div>
+
+            <dl className="rounded-2xl overflow-hidden shadow-sm"
+                style={{ border: "1px solid var(--border-subtle)", background: "var(--bg-card)" }}>
+              {GLANCE.map(([label, value], i) => (
+                <div key={label} className="flex items-baseline justify-between gap-4 px-6 py-4 sm:py-5"
+                     style={{ borderTop: i ? "1px solid var(--border-subtle)" : "none" }}>
+                  <dt className="text-sm font-medium" style={{ color: "var(--text-muted)" }}>{label}</dt>
+                  <dd className="text-xl sm:text-2xl font-bold tabular-nums" style={{ color: "var(--text-heading)", letterSpacing: "-0.02em" }}>
+                    {value}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </Inner>
+        </section>
+
+        {/* Features */}
+        <Section id="features">
+          <Heading title="What you can do" sub="Everything for discovering, tracking and organising anime in one unified workspace." />
+          <RuledGrid cols="sm:grid-cols-2 lg:grid-cols-4">
+            {FEATURES.map(({ icon: Icon, title, desc }) => (
+              <div
+                key={title}
+                className="p-6 sm:p-7 transition-colors"
+                style={{ background: "var(--bg-card)" }}
+                onMouseEnter={e => e.currentTarget.style.background = "var(--bg-card-hover)"}
+                onMouseLeave={e => e.currentTarget.style.background = "var(--bg-card)"}
+              >
+                <Icon size={20} style={{ color: "var(--color-primary)" }} />
+                <h3 className="font-bold mt-4 mb-1.5" style={{ color: "var(--text-heading)" }}>{title}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>{desc}</p>
+              </div>
+            ))}
+          </RuledGrid>
+        </Section>
+
+        {/* Data source */}
+        <Section id="data">
+          <Heading title="Powered by Tenrai & MyAnimeList"
+                   sub="All data is provided by the high-throughput Tenrai REST API, serving comprehensive MyAnimeList records with edge CDN caching." />
+          <div className="grid gap-6 lg:grid-cols-5">
+            <dl className="lg:col-span-3 rounded-2xl overflow-hidden shadow-sm"
+                style={{ border: "1px solid var(--border-subtle)", background: "var(--bg-card)" }}>
+              {API_DETAILS.map((r, i) => (
+                <div key={r.label} className="grid gap-1 sm:grid-cols-[160px_1fr] sm:gap-6 px-5 py-4 transition-colors"
+                     style={{ borderTop: i ? "1px solid var(--border-subtle)" : "none" }}>
+                  <dt className="text-sm font-medium" style={{ color: "var(--text-muted)" }}>{r.label}</dt>
+                  <dd className="min-w-0">
+                    <span className="text-sm font-semibold break-words" style={{ color: "var(--text-heading)" }}>{r.value}</span>
+                    {r.note && <p className="text-xs mt-1" style={{ color: "var(--text-subtle)" }}>{r.note}</p>}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+            <div className="lg:col-span-2"><BackoffChart /></div>
+          </div>
+        </Section>
+
+        {/* Reliability */}
+        <Section id="reliability">
+          <Heading title="Engineered for speed & stability"
+                   sub="Every request passes through an in-memory cache and a concurrency queue before reaching the API." />
+          <Flow />
+          <RuledGrid cols="sm:grid-cols-2 lg:grid-cols-3">
+            {RELIABILITY.map(({ icon: Icon, title, desc }) => (
+              <div
+                key={title}
+                className="flex gap-4 p-6 transition-colors"
+                style={{ background: "var(--bg-card)" }}
+                onMouseEnter={e => e.currentTarget.style.background = "var(--bg-card-hover)"}
+                onMouseLeave={e => e.currentTarget.style.background = "var(--bg-card)"}
+              >
+                <Icon size={18} className="shrink-0 mt-0.5" style={{ color: "var(--color-primary)" }} />
+                <div>
+                  <h3 className="font-bold text-sm mb-1" style={{ color: "var(--text-heading)" }}>{title}</h3>
+                  <p className="text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>{desc}</p>
+                </div>
+              </div>
+            ))}
+          </RuledGrid>
+        </Section>
+
+        {/* Trust */}
+        <Section id="trust">
+          <Heading title="Content & privacy standards"
+                   sub="What we verify, what we disclaim, and what you should know." />
+          <Trust />
+          <div className="mt-5 flex gap-4 rounded-2xl p-5 sm:p-6"
+               style={{
+                 background: "var(--nav-link-active-bg, rgba(96,165,250,.06))",
+                 border: "1px solid var(--border-accent, rgba(96,165,250,.2))"
+               }}>
+            <Lock size={18} className="shrink-0 mt-0.5" style={{ color: "var(--color-primary)" }} />
+            <p className="text-sm leading-relaxed" style={{ color: "var(--text-main)" }}>
+              <span className="font-bold" style={{ color: "var(--text-heading)" }}>Security & Encryption:</span>{" "}
+              Passwords are hashed with bcrypt (12 salt rounds). Sessions rely on signed JWTs in
+              HTTP-only, secure cookies. Zero third-party trackers, ad networks, or telemetry scripts are loaded, and user
+              data is never rented, shared, or sold.
+            </p>
+          </div>
+        </Section>
+
+        {/* FAQ */}
+        <Section id="faq">
+          <Heading title="Frequently asked questions" />
+          <div className="grid gap-x-12 lg:grid-cols-2 items-start">
+            {[FAQS.slice(0, half), FAQS.slice(half)].map((col, c) => (
+              <div key={c} style={{ borderTop: "1px solid var(--border-subtle)" }}>
+                {col.map(f => <Faq key={f.q} {...f} />)}
+              </div>
+            ))}
+          </div>
+        </Section>
+
+        {/* Contact */}
+        <Section id="contact">
+          <Heading title="Contact & resources" />
+          <RuledGrid cols="md:grid-cols-3">
+            {LINKS.map(({ icon: Icon, label, desc, href, external }) => (
+              <a key={label} href={href}
+                 {...(external && { target: "_blank", rel: "noreferrer" })}
+                 className={`group p-6 sm:p-8 transition-colors no-underline ${FOCUS}`}
+                 style={{ background: "var(--bg-card)" }}
+                 onMouseEnter={e => e.currentTarget.style.background = "var(--bg-card-hover)"}
+                 onMouseLeave={e => e.currentTarget.style.background = "var(--bg-card)"}
+              >
+                <Icon size={22} style={{ color: "var(--color-primary)" }} />
+                <p className="font-bold mt-5 mb-1" style={{ color: "var(--text-heading)" }}>{label}</p>
+                <p className="text-sm" style={{ color: "var(--text-muted)" }}>{desc}</p>
+              </a>
+            ))}
+          </RuledGrid>
+
+          <div className="mt-16 text-center">
+            <p className="inline-flex items-center gap-1.5 text-sm font-medium" style={{ color: "var(--text-muted)" }}>
+              <Heart size={14} style={{ color: "var(--color-secondary, #ec4899)", fill: "var(--color-secondary, #ec4899)" }} />
+              Built with love for the anime community
+            </p>
+            <p className="mt-2 text-xs max-w-xl mx-auto" style={{ color: "var(--text-subtle)" }}>
+              AniFind is not affiliated with MyAnimeList, Tenrai, Jikan, or any anime studio.
+              All trademarks and copyrighted materials belong to their respective owners.
+            </p>
+          </div>
+        </Section>
+      </main>
+    </MotionConfig>
+  );
+};
 
 export default About;

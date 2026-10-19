@@ -1,136 +1,73 @@
+// src/pages/SearchPage.jsx
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Search, SlidersHorizontal, X, Filter,
-  LayoutGrid, LayoutList, ChevronDown, Sparkles,
-  Tag, ArrowUpDown, Calendar, Star, Tv, Globe,
-  Flame,
+  Search, SlidersHorizontal, X, LayoutGrid, LayoutList, ChevronDown,
+  Sparkles, Tag, ArrowUpDown, Calendar, Star, Tv, Globe, Flame,
 } from "lucide-react";
 import { animeService } from "../services/animeService";
 import { useDebounce } from "../hooks/useDebounce";
-import AnimeCard from "../components/section/AnimeCard";
+import AnimeCard from "../components/anime/AnimeCard";
+import ScrollRope from "../components/ui/ScrollRope";
 
-/* ══════════════════════════════════════════════════════════
-   CONSTANTS
-══════════════════════════════════════════════════════════ */
+const ACCENT = "#a5b4fc";
+const PAGE_SIZE = 24;
+
 const ALL_GENRES = [
-  { name: "Action", id: 1 }, { name: "Adventure", id: 2 },
-  { name: "Cars", id: 3 }, { name: "Comedy", id: 4 },
-  { name: "Dementia", id: 5 }, { name: "Demons", id: 6 },
-  { name: "Drama", id: 8 }, { name: "Ecchi", id: 9 },
-  { name: "Fantasy", id: 10 }, { name: "Game", id: 11 },
-  { name: "Harem", id: 35 }, { name: "Historical", id: 13 },
-  { name: "Horror", id: 14 }, { name: "Isekai", id: 62 },
-  { name: "Josei", id: 43 }, { name: "Kids", id: 15 },
-  { name: "Magic", id: 16 }, { name: "Martial Arts", id: 17 },
-  { name: "Mecha", id: 18 }, { name: "Military", id: 38 },
-  { name: "Music", id: 19 }, { name: "Mystery", id: 7 },
-  { name: "Parody", id: 20 }, { name: "Police", id: 39 },
-  { name: "Psychological", id: 40 }, { name: "Romance", id: 22 },
-  { name: "Samurai", id: 21 }, { name: "School", id: 23 },
-  { name: "Sci-Fi", id: 24 }, { name: "Seinen", id: 42 },
-  { name: "Shoujo", id: 25 }, { name: "Shoujo Ai", id: 26 },
-  { name: "Shounen", id: 27 }, { name: "Shounen Ai", id: 28 },
-  { name: "Slice of Life", id: 36 }, { name: "Space", id: 29 },
-  { name: "Sports", id: 30 }, { name: "Super Power", id: 31 },
-  { name: "Supernatural", id: 37 }, { name: "Thriller", id: 41 },
-  { name: "Vampire", id: 32 },
+  { name: "Action", id: 1 }, { name: "Adventure", id: 2 }, { name: "Cars", id: 3 },
+  { name: "Comedy", id: 4 }, { name: "Dementia", id: 5 }, { name: "Demons", id: 6 },
+  { name: "Drama", id: 8 }, { name: "Ecchi", id: 9 }, { name: "Fantasy", id: 10 },
+  { name: "Game", id: 11 }, { name: "Harem", id: 35 }, { name: "Historical", id: 13 },
+  { name: "Horror", id: 14 }, { name: "Isekai", id: 62 }, { name: "Josei", id: 43 },
+  { name: "Kids", id: 15 }, { name: "Magic", id: 16 }, { name: "Martial Arts", id: 17 },
+  { name: "Mecha", id: 18 }, { name: "Military", id: 38 }, { name: "Music", id: 19 },
+  { name: "Mystery", id: 7 }, { name: "Parody", id: 20 }, { name: "Police", id: 39 },
+  { name: "Psychological", id: 40 }, { name: "Romance", id: 22 }, { name: "Samurai", id: 21 },
+  { name: "School", id: 23 }, { name: "Sci-Fi", id: 24 }, { name: "Seinen", id: 42 },
+  { name: "Shoujo", id: 25 }, { name: "Shoujo Ai", id: 26 }, { name: "Shounen", id: 27 },
+  { name: "Shounen Ai", id: 28 }, { name: "Slice of Life", id: 36 }, { name: "Space", id: 29 },
+  { name: "Sports", id: 30 }, { name: "Super Power", id: 31 }, { name: "Supernatural", id: 37 },
+  { name: "Thriller", id: 41 }, { name: "Vampire", id: 32 },
 ];
-
 const TYPES = ["TV", "Movie", "OVA", "ONA", "Special"];
-const STATUSES = [
-  { label: "Airing", value: "airing" },
-  { label: "Finished", value: "complete" },
-  { label: "Upcoming", value: "upcoming" },
-];
-const RATINGS = [
-  { label: "All ages", value: "g" },
-  { label: "PG", value: "pg" },
-  { label: "PG-13", value: "pg13" },
-  { label: "R 17+", value: "r17" },
-];
-const SCORES = ["9+", "8+", "7+", "6+"];
+const STATUSES = [["Airing", "airing"], ["Finished", "complete"], ["Upcoming", "upcoming"]];
+const RATINGS = [["All ages", "g"], ["PG", "pg"], ["PG-13", "pg13"], ["R 17+", "r17"]];
+const SCORES = ["9", "8", "7", "6"];
 const SEASONS_LIST = ["winter", "spring", "summer", "fall"];
-const SORT_OPTIONS = [
-  { label: "Default", value: "" },
-  { label: "Score", value: "score" },
-  { label: "Popularity", value: "popularity" },
-  { label: "Rank", value: "rank" },
-  { label: "Title", value: "title" },
-  { label: "Newest", value: "start_date" },
-];
+const SORTS = [["Default", ""], ["Score", "score"], ["Popularity", "popularity"], ["Rank", "rank"], ["Title", "title"], ["Newest", "start_date"]];
+const TAG_COLORS = { genres: "#a5b4fc", type: "#60a5fa", status: "#4ade80", min_score: "#fbbf24", season: "#f9a8d4", rating: "#fb923c", order_by: "#c4b5fd", start_date: "#67e8f9", end_date: "#67e8f9" };
 
 const EMPTY_FILTERS = {
-  type: "",
-  status: "",
-  order_by: "",
-  rating: "",
-  min_score: "",
-  season: "",
-  start_date: "",
-  end_date: "",
-  genres: "",
+  type: "", status: "", order_by: "", rating: "", min_score: "", season: "", start_date: "", end_date: "", genres: "",
 };
 
-/* ══════════════════════════════════════════════════════════
-   UI ATOMS
-══════════════════════════════════════════════════════════ */
-const Chip = ({ active, onClick, children, color }) => (
-  <button
-    onClick={onClick}
-    className="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all hover:scale-105 active:scale-95 whitespace-nowrap select-none"
+const Chip = ({ active, onClick, children, color = ACCENT }) => (
+  <button onClick={onClick} aria-pressed={active}
+    className="px-2.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors select-none"
     style={{
-      background: active
-        ? color ? `${color}28` : "rgba(99,102,241,.28)"
-        : "rgba(255,255,255,.04)",
-      border: active
-        ? `1px solid ${color ? color.replace("1)", ".5)") : "rgba(99,102,241,.45)"}`
-        : "1px solid rgba(255,255,255,.08)",
-      color: active ? color ?? "#a5b4fc" : "rgba(255,255,255,.50)",
-    }}
-  >
+      background: active ? `${color}22` : "var(--nav-btn-bg, rgba(255,255,255,.04))",
+      border: `1px solid ${active ? `${color}55` : "var(--border-subtle, rgba(255,255,255,.08))"}`,
+      color: active ? color : "var(--text-muted, rgba(255,255,255,.55))",
+    }}>
     {children}
   </button>
 );
 
-const FilterSection = ({ icon: Icon, label, children }) => {
-  const [open, setOpen] = useState(true);
-
+const FilterSection = ({ icon: Icon, label, children, defaultOpen = true }) => {
+  const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="border-b pb-4" style={{ borderColor: "rgba(255,255,255,.06)" }}>
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="flex items-center justify-between w-full mb-3 group"
-      >
-        <div className="flex items-center gap-2">
-          {Icon && <Icon size={12} style={{ color: "rgba(99,102,241,.75)" }} />}
-          <span
-            className="text-[10px] uppercase tracking-widest font-bold"
-            style={{ color: "rgba(148,163,184,.50)" }}
-          >
-            {label}
-          </span>
-        </div>
-        <ChevronDown
-          size={12}
-          style={{
-            color: "rgba(148,163,184,.35)",
-            transform: open ? "rotate(180deg)" : "rotate(0deg)",
-            transition: "transform .2s",
-          }}
-        />
+    <div className="border-b pb-4 last:border-0 last:pb-0" style={{ borderColor: "var(--border-subtle, rgba(255,255,255,.05))" }}>
+      <button onClick={() => setOpen((o) => !o)} className="flex items-center justify-between w-full mb-2.5">
+        <span className="flex items-center gap-2 text-xs font-bold" style={{ color: "var(--text-muted, #94a3b8)" }}>
+          {Icon && <Icon size={12} />}{label}
+        </span>
+        <ChevronDown size={13} className="transition-transform" style={{ color: "var(--text-subtle, #64748b)", transform: open ? "rotate(180deg)" : "none" }} />
       </button>
-
       <AnimatePresence initial={false}>
         {open && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
-          >
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.18 }} className="overflow-hidden">
             {children}
           </motion.div>
         )}
@@ -139,233 +76,68 @@ const FilterSection = ({ icon: Icon, label, children }) => {
   );
 };
 
-/* ══════════════════════════════════════════════════════════
-   FILTER PANEL
-══════════════════════════════════════════════════════════ */
 const FilterPanel = ({ filters, onChange, onClear, onClose }) => {
-  const set = (key, val) =>
-    onChange({ ...filters, [key]: filters[key] === val ? "" : val });
-
-  const setGenre = (id) =>
-    onChange({ ...filters, genres: filters.genres === String(id) ? "" : String(id) });
-
-  const activeCount = Object.values(filters).filter(Boolean).length;
   const [genreSearch, setGenreSearch] = useState("");
-
-  const filteredGenres = ALL_GENRES.filter((g) =>
-    g.name.toLowerCase().includes(genreSearch.toLowerCase())
-  );
+  const set = (key, val) => onChange({ ...filters, [key]: filters[key] === val ? "" : val });
+  const setGenre = (id) => onChange({ ...filters, genres: filters.genres === String(id) ? "" : String(id) });
+  const activeCount = Object.values(filters).filter(Boolean).length;
+  const filteredGenres = ALL_GENRES.filter((g) => g.name.toLowerCase().includes(genreSearch.toLowerCase()));
 
   return (
-    <div
-      className="flex flex-col h-full rounded-2xl overflow-hidden"
-      style={{
-        background: "rgba(10,10,22,.98)",
-        border: "1px solid rgba(255,255,255,.08)",
-      }}
-    >
-      <div
-        className="flex items-center justify-between px-4 py-3.5 flex-shrink-0"
-        style={{ borderBottom: "1px solid rgba(255,255,255,.07)" }}
-      >
+    <div className="flex flex-col h-full rounded-2xl overflow-hidden" style={{ background: "var(--bg-card, rgba(16,16,32,.92))", border: "1px solid var(--border-subtle, rgba(255,255,255,.08))" }}>
+      <div className="flex items-center justify-between px-4 py-3.5 border-b flex-shrink-0" style={{ borderColor: "var(--border-subtle, rgba(255,255,255,.05))" }}>
         <div className="flex items-center gap-2">
-          <div
-            className="w-6 h-6 rounded-lg flex items-center justify-center"
-            style={{
-              background: "rgba(99,102,241,.18)",
-              border: "1px solid rgba(99,102,241,.28)",
-            }}
-          >
-            <Filter size={11} style={{ color: "#a5b4fc" }} />
-          </div>
-          <span className="text-sm font-bold text-white">Filters</span>
-          {activeCount > 0 && (
-            <span
-              className="text-[9px] font-black px-1.5 py-0.5 rounded-full"
-              style={{
-                background: "rgba(99,102,241,.25)",
-                color: "#a5b4fc",
-                border: "1px solid rgba(99,102,241,.38)",
-              }}
-            >
-              {activeCount}
-            </span>
-          )}
+          <span className="font-bold text-sm" style={{ color: "var(--text-heading, #fff)" }}>Filters</span>
+          {activeCount > 0 && <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full" style={{ background: `${ACCENT}30`, color: ACCENT }}>{activeCount}</span>}
         </div>
-
         <div className="flex items-center gap-2">
-          {activeCount > 0 && (
-            <button
-              onClick={onClear}
-              className="text-[10px] font-semibold px-2.5 py-1 rounded-lg transition-all hover:scale-105"
-              style={{
-                background: "rgba(239,68,68,.10)",
-                color: "rgba(252,165,165,.80)",
-                border: "1px solid rgba(239,68,68,.20)",
-              }}
-            >
-              Clear all
-            </button>
-          )}
-          {onClose && (
-            <button
-              onClick={onClose}
-              className="w-6 h-6 rounded-lg flex items-center justify-center transition-all hover:scale-110 lg:hidden"
-              style={{
-                background: "rgba(255,255,255,.06)",
-                border: "1px solid rgba(255,255,255,.10)",
-              }}
-            >
-              <X size={12} style={{ color: "rgba(255,255,255,.55)" }} />
-            </button>
-          )}
+          {activeCount > 0 && <button onClick={onClear} className="text-[11px] font-semibold px-2.5 py-1 rounded-lg text-rose-300 bg-rose-500/10 border border-rose-400/20">Clear all</button>}
+          {onClose && <button onClick={onClose} aria-label="Close filters" className="w-7 h-7 rounded-lg grid place-items-center lg:hidden" style={{ background: "var(--nav-btn-bg, rgba(255,255,255,.05))", color: "var(--text-muted, #cbd5e1)" }}><X size={13} /></button>}
         </div>
       </div>
 
-      <div
-        className="flex-1 overflow-y-auto px-4 py-4 space-y-4"
-        style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(99,102,241,.3) transparent" }}
-      >
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
         <FilterSection icon={Tv} label="Type">
-          <div className="flex flex-wrap gap-1.5">
-            {TYPES.map((t) => (
-              <Chip key={t} active={filters.type === t} onClick={() => set("type", t)}>
-                {t}
-              </Chip>
-            ))}
-          </div>
+          <div className="flex flex-wrap gap-1.5">{TYPES.map((t) => <Chip key={t} active={filters.type === t} onClick={() => set("type", t)}>{t}</Chip>)}</div>
         </FilterSection>
-
         <FilterSection icon={Globe} label="Status">
-          <div className="flex flex-wrap gap-1.5">
-            {STATUSES.map((s) => (
-              <Chip
-                key={s.value}
-                active={filters.status === s.value}
-                onClick={() => set("status", s.value)}
-              >
-                {s.label}
-              </Chip>
-            ))}
-          </div>
+          <div className="flex flex-wrap gap-1.5">{STATUSES.map(([l, v]) => <Chip key={v} active={filters.status === v} onClick={() => set("status", v)} color="#4ade80">{l}</Chip>)}</div>
         </FilterSection>
-
-        <FilterSection icon={Star} label="Min Score">
-          <div className="flex flex-wrap gap-1.5">
-            {SCORES.map((s) => (
-              <Chip
-                key={s}
-                active={filters.min_score === s.replace("+", "")}
-                onClick={() => set("min_score", s.replace("+", ""))}
-                color="rgba(251,191,36,1)"
-              >
-                ⭐ {s}
-              </Chip>
-            ))}
-          </div>
+        <FilterSection icon={Star} label="Minimum score">
+          <div className="flex flex-wrap gap-1.5">{SCORES.map((s) => <Chip key={s} active={filters.min_score === s} onClick={() => set("min_score", s)} color="#fbbf24">{s}+</Chip>)}</div>
         </FilterSection>
-
         <FilterSection icon={Calendar} label="Season">
-          <div className="flex flex-wrap gap-1.5">
-            {SEASONS_LIST.map((s) => (
-              <Chip key={s} active={filters.season === s} onClick={() => set("season", s)}>
-                {s.charAt(0).toUpperCase() + s.slice(1)}
-              </Chip>
-            ))}
-          </div>
+          <div className="flex flex-wrap gap-1.5">{SEASONS_LIST.map((s) => <Chip key={s} active={filters.season === s} onClick={() => set("season", s)} color="#f9a8d4">{s[0].toUpperCase() + s.slice(1)}</Chip>)}</div>
         </FilterSection>
-
         <FilterSection label="Rating">
-          <div className="flex flex-wrap gap-1.5">
-            {RATINGS.map((r) => (
-              <Chip key={r.value} active={filters.rating === r.value} onClick={() => set("rating", r.value)}>
-                {r.label}
-              </Chip>
-            ))}
-          </div>
+          <div className="flex flex-wrap gap-1.5">{RATINGS.map(([l, v]) => <Chip key={v} active={filters.rating === v} onClick={() => set("rating", v)} color="#fb923c">{l}</Chip>)}</div>
         </FilterSection>
-
-        <FilterSection icon={Calendar} label="Year Range">
+        <FilterSection icon={Calendar} label="Year range">
           <div className="grid grid-cols-2 gap-2">
             {[["start_date", "From"], ["end_date", "To"]].map(([key, ph]) => (
               <div key={key}>
-                <p
-                  className="text-[9px] font-semibold mb-1 uppercase tracking-wider"
-                  style={{ color: "rgba(148,163,184,.38)" }}
-                >
-                  {ph}
-                </p>
-                <input
-                  type="number"
-                  min={1960}
-                  max={new Date().getFullYear() + 2}
-                  value={filters[key] || ""}
-                  onChange={(e) => onChange({ ...filters, [key]: e.target.value })}
-                  placeholder="YYYY"
-                  className="w-full rounded-xl px-3 py-2 text-xs text-white outline-none"
-                  style={{
-                    background: "rgba(255,255,255,.05)",
-                    border: "1px solid rgba(255,255,255,.09)",
-                    WebkitAppearance: "none",
-                  }}
-                />
+                <p className="text-[10px] mb-1" style={{ color: "var(--text-subtle, #64748b)" }}>{ph}</p>
+                <input type="number" min={1960} max={new Date().getFullYear() + 2} value={filters[key] || ""}
+                  onChange={(e) => onChange({ ...filters, [key]: e.target.value })} placeholder="YYYY"
+                  className="w-full rounded-lg px-3 py-2 text-xs outline-none focus:border-indigo-400"
+                  style={{ background: "var(--nav-btn-bg, rgba(255,255,255,.04))", border: "1px solid var(--border-subtle, rgba(255,255,255,.1))", color: "var(--text-heading, #fff)" }} />
               </div>
             ))}
           </div>
         </FilterSection>
-
-        <FilterSection icon={ArrowUpDown} label="Sort By">
-          <div className="flex flex-wrap gap-1.5">
-            {SORT_OPTIONS.map((opt) => (
-              <Chip
-                key={opt.value}
-                active={filters.order_by === opt.value}
-                onClick={() => set("order_by", opt.value)}
-              >
-                {opt.label}
-              </Chip>
-            ))}
-          </div>
+        <FilterSection icon={ArrowUpDown} label="Sort by">
+          <div className="flex flex-wrap gap-1.5">{SORTS.map(([l, v]) => <Chip key={v} active={filters.order_by === v} onClick={() => set("order_by", v)}>{l}</Chip>)}</div>
         </FilterSection>
-
-        <FilterSection icon={Tag} label="Genre">
+        <FilterSection icon={Tag} label="Genre" defaultOpen={false}>
           <div className="relative mb-2">
-            <Search
-              size={10}
-              className="absolute left-2.5 top-1/2 -translate-y-1/2"
-              style={{ color: "rgba(148,163,184,.4)" }}
-            />
-            <input
-              value={genreSearch}
-              onChange={(e) => setGenreSearch(e.target.value)}
-              placeholder="Filter genres…"
-              className="w-full rounded-lg pl-7 pr-3 py-1.5 text-xs text-white outline-none"
-              style={{
-                background: "rgba(255,255,255,.05)",
-                border: "1px solid rgba(255,255,255,.08)",
-              }}
-            />
+            <Search size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--text-subtle, #64748b)" }} />
+            <input value={genreSearch} onChange={(e) => setGenreSearch(e.target.value)} placeholder="Filter genres"
+              className="w-full rounded-lg pl-7 pr-3 py-1.5 text-xs outline-none"
+              style={{ background: "var(--nav-btn-bg, rgba(255,255,255,.04))", border: "1px solid var(--border-subtle, rgba(255,255,255,.1))", color: "var(--text-heading, #fff)" }} />
           </div>
-
-          <div
-            className="flex flex-wrap gap-1.5 overflow-y-auto pr-0.5"
-            style={{ maxHeight: 180, scrollbarWidth: "thin" }}
-          >
-            {filteredGenres.map((g) => (
-              <Chip
-                key={g.id}
-                active={filters.genres === String(g.id)}
-                onClick={() => setGenre(g.id)}
-                color="rgba(99,102,241,1)"
-              >
-                {g.name}
-              </Chip>
-            ))}
-            {filteredGenres.length === 0 && (
-              <p className="text-xs py-2" style={{ color: "rgba(148,163,184,.38)" }}>
-                No genres match "{genreSearch}"
-              </p>
-            )}
+          <div className="flex flex-wrap gap-1.5 max-h-44 overflow-y-auto pr-0.5">
+            {filteredGenres.map((g) => <Chip key={g.id} active={filters.genres === String(g.id)} onClick={() => setGenre(g.id)}>{g.name}</Chip>)}
+            {filteredGenres.length === 0 && <p className="text-xs py-2" style={{ color: "var(--text-subtle, #64748b)" }}>No genres match &quot;{genreSearch}&quot;</p>}
           </div>
         </FilterSection>
       </div>
@@ -373,28 +145,12 @@ const FilterPanel = ({ filters, onChange, onClear, onClose }) => {
   );
 };
 
-/* ══════════════════════════════════════════════════════════
-   MOBILE FILTER DRAWER
-══════════════════════════════════════════════════════════ */
 const MobileFilterDrawer = ({ open, onClose, filters, onChange, onClear }) => (
   <AnimatePresence>
     {open && (
       <>
-        <motion.div
-          className="fixed inset-0 z-40"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          style={{ background: "rgba(0,0,0,.72)", backdropFilter: "blur(8px)" }}
-          onClick={onClose}
-        />
-        <motion.div
-          className="fixed inset-y-0 left-0 z-50 w-80 max-w-[90vw] flex flex-col"
-          initial={{ x: "-100%" }}
-          animate={{ x: 0 }}
-          exit={{ x: "-100%" }}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        >
+        <motion.div className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} />
+        <motion.div className="fixed inset-y-0 left-0 z-50 w-80 max-w-[88vw]" initial={{ x: "-100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} transition={{ type: "spring", stiffness: 300, damping: 30 }}>
           <FilterPanel filters={filters} onChange={onChange} onClear={onClear} onClose={onClose} />
         </motion.div>
       </>
@@ -402,131 +158,68 @@ const MobileFilterDrawer = ({ open, onClose, filters, onChange, onClear }) => (
   </AnimatePresence>
 );
 
-const CardSkeleton = ({ index }) => (
-  <motion.div
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    transition={{ delay: index * 0.03 }}
-    className="flex flex-col gap-2.5"
-  >
-    <div
-      className="w-full rounded-2xl animate-pulse"
-      style={{ aspectRatio: "2/3", background: "rgba(255,255,255,.06)" }}
-    />
-    <div className="space-y-1.5 px-0.5">
-      <div className="h-2.5 rounded-full animate-pulse" style={{ width: "80%", background: "rgba(255,255,255,.05)" }} />
-      <div className="h-2 rounded-full animate-pulse" style={{ width: "55%", background: "rgba(255,255,255,.04)" }} />
-    </div>
-  </motion.div>
+const Skeleton = () => (
+  <div className="space-y-2">
+    <div className="w-full rounded-xl animate-pulse" style={{ aspectRatio: "2/3", background: "var(--border-subtle, rgba(255,255,255,.05))" }} />
+    <div className="h-2.5 w-4/5 rounded-full animate-pulse" style={{ background: "var(--border-subtle, rgba(255,255,255,.05))" }} />
+    <div className="h-2 w-1/2 rounded-full animate-pulse" style={{ background: "var(--border-subtle, rgba(255,255,255,.03))" }} />
+  </div>
 );
 
-const ActiveTags = ({ filters, onChange }) => {
-  const tags = [];
-  const activeGenre = filters.genres
-    ? ALL_GENRES.find((g) => String(g.id) === filters.genres)
-    : null;
-
-  if (activeGenre) tags.push({ key: "genres", label: activeGenre.name, color: "#a5b4fc" });
-  if (filters.type) tags.push({ key: "type", label: filters.type, color: "#60a5fa" });
-  if (filters.status) tags.push({ key: "status", label: filters.status, color: "#4ade80" });
-  if (filters.min_score) tags.push({ key: "min_score", label: `Score ${filters.min_score}+`, color: "#fbbf24" });
-  if (filters.season) tags.push({ key: "season", label: filters.season, color: "#f9a8d4" });
-  if (filters.rating) tags.push({ key: "rating", label: filters.rating.toUpperCase(), color: "#fb923c" });
-  if (filters.order_by) tags.push({ key: "order_by", label: `Sort: ${filters.order_by}`, color: "#c4b5fd" });
-  if (filters.start_date) tags.push({ key: "start_date", label: `From ${filters.start_date}`, color: "#67e8f9" });
-  if (filters.end_date) tags.push({ key: "end_date", label: `To ${filters.end_date}`, color: "#67e8f9" });
-
-  if (!tags.length) return null;
-
+const ListRow = ({ anime, index }) => {
+  const img = anime.images?.jpg?.large_image_url || anime.images?.jpg?.image_url;
+  const title = anime.title_english || anime.title;
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -6 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="flex flex-wrap gap-1.5 mb-4 sm:mb-5"
-    >
-      {tags.map((t) => (
-        <span
-          key={t.key}
-          className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold"
-          style={{
-            background: `${t.color}14`,
-            border: `1px solid ${t.color}35`,
-            color: t.color,
-          }}
-        >
-          {t.label}
-          <button
-            onClick={() => onChange({ ...filters, [t.key]: "" })}
-            className="ml-0.5 transition-opacity hover:opacity-60"
-          >
-            <X size={10} />
-          </button>
-        </span>
-      ))}
-    </motion.div>
+    <Link to={`/anime/${anime.mal_id}`}
+      className="group flex items-center gap-4 p-3 rounded-xl transition-colors hover:bg-white/[.06]"
+      style={{ background: "var(--bg-card, rgba(255,255,255,.025))", border: "1px solid var(--border-subtle, rgba(255,255,255,.06))" }}>
+      <span className="w-7 text-center text-xs font-bold tabular-nums" style={{ color: index < 3 ? ACCENT : "var(--text-subtle, rgba(255,255,255,.3))" }}>{index + 1}</span>
+      <img src={img} alt="" loading="lazy" className="w-11 h-15 rounded-lg object-cover flex-shrink-0" style={{ height: 60 }} />
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold text-sm truncate transition-colors" style={{ color: "var(--text-heading, #fff)" }}>{title}</p>
+        <div className="flex items-center gap-2 mt-1 text-[11px] flex-wrap" style={{ color: "var(--text-muted, #94a3b8)" }}>
+          {anime.type && <span className="uppercase font-bold">{anime.type}</span>}
+          {anime.episodes && <span>{anime.episodes} eps</span>}
+          {anime.genres?.slice(0, 2).map((g) => <span key={g.mal_id} style={{ color: "var(--color-primary, #a5b4fc)", opacity: 0.8 }}>{g.name}</span>)}
+        </div>
+      </div>
+      {anime.status === "Currently Airing" && <span className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" style={{ boxShadow: "0 0 6px #4ade80" }} />}
+      {anime.score && <span className="inline-flex items-center gap-1 text-sm font-bold tabular-nums flex-shrink-0" style={{ color: "var(--text-heading, #fff)" }}><Star size={11} fill="#fbbf24" stroke="#fbbf24" />{anime.score.toFixed(1)}</span>}
+    </Link>
   );
 };
 
-const EmptyState = ({ searched, query }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 12 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="flex flex-col items-center justify-center py-20 sm:py-28 gap-5 text-center"
-  >
-    <div
-      className="w-20 h-20 rounded-3xl flex items-center justify-center"
-      style={{
-        background: "rgba(99,102,241,.10)",
-        border: "1px solid rgba(99,102,241,.20)",
-        boxShadow: "0 0 40px rgba(99,102,241,.10)",
-      }}
-    >
-      {searched
-        ? <X size={32} style={{ color: "rgba(99,102,241,.55)" }} />
-        : <Sparkles size={32} style={{ color: "rgba(99,102,241,.55)" }} />
-      }
+const ActiveTags = ({ filters, onChange }) => {
+  const activeGenre = filters.genres ? ALL_GENRES.find((g) => String(g.id) === filters.genres) : null;
+  const tags = [
+    activeGenre && { key: "genres", label: activeGenre.name },
+    filters.type && { key: "type", label: filters.type },
+    filters.status && { key: "status", label: filters.status },
+    filters.min_score && { key: "min_score", label: `Score ${filters.min_score}+` },
+    filters.season && { key: "season", label: filters.season },
+    filters.rating && { key: "rating", label: filters.rating.toUpperCase() },
+    filters.order_by && { key: "order_by", label: `Sort: ${filters.order_by}` },
+    filters.start_date && { key: "start_date", label: `From ${filters.start_date}` },
+    filters.end_date && { key: "end_date", label: `To ${filters.end_date}` },
+  ].filter(Boolean);
+  if (!tags.length) return null;
+  return (
+    <div className="flex flex-wrap gap-1.5 mb-5">
+      {tags.map((t) => {
+        const c = TAG_COLORS[t.key] ?? ACCENT;
+        return (
+          <span key={t.key} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold" style={{ background: `${c}18`, border: `1px solid ${c}38`, color: c }}>
+            {t.label}
+            <button onClick={() => onChange({ ...filters, [t.key]: "" })} aria-label={`Remove ${t.label}`} className="hover:opacity-60"><X size={10} /></button>
+          </span>
+        );
+      })}
     </div>
+  );
+};
 
-    <div>
-      <p className="font-black text-white mb-2" style={{ fontSize: "clamp(16px,2.5vw,22px)" }}>
-        {searched ? "No results found" : "Find your next anime"}
-      </p>
-      <p className="text-sm leading-relaxed" style={{ color: "rgba(148,163,184,.50)", maxWidth: 360 }}>
-        {searched
-          ? query
-            ? `No anime matched "${query}". Try different keywords or adjust your filters.`
-            : "No anime matched your filters. Try removing some to broaden your search."
-          : "Browse the most popular anime below or start typing to search by title."
-        }
-      </p>
-    </div>
-  </motion.div>
-);
-
-/* default hero badge */
-const DefaultBrowseBanner = () => (
-  <motion.div
-    initial={{ opacity: 0, y: -6 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="flex items-center gap-2 mb-4 sm:mb-5 px-3 py-2 rounded-xl"
-    style={{
-      background: "rgba(251,191,36,.08)",
-      border: "1px solid rgba(251,191,36,.18)",
-    }}
-  >
-    <Flame size={13} style={{ color: "#fbbf24" }} />
-    <span className="text-xs font-semibold" style={{ color: "#fbbf24" }}>
-      Showing top anime by default
-    </span>
-  </motion.div>
-);
-
-/* ══════════════════════════════════════════════════════════
-   SEARCH PAGE
-══════════════════════════════════════════════════════════ */
 const SearchPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-
   const [query, setQuery] = useState(searchParams.get("q") || "");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -538,43 +231,29 @@ const SearchPage = () => {
   const [isDefaultMode, setIsDefaultMode] = useState(false);
 
   const [filters, setFilters] = useState({
-    type: searchParams.get("type") || "",
-    status: searchParams.get("status") || "",
-    order_by: searchParams.get("sort") || "",
-    rating: searchParams.get("rating") || "",
-    min_score: searchParams.get("min_score") || "",
-    season: searchParams.get("season") || "",
-    start_date: searchParams.get("start_date") || "",
-    end_date: searchParams.get("end_date") || "",
+    type: searchParams.get("type") || "", status: searchParams.get("status") || "",
+    order_by: searchParams.get("sort") || "", rating: searchParams.get("rating") || "",
+    min_score: searchParams.get("min_score") || "", season: searchParams.get("season") || "",
+    start_date: searchParams.get("start_date") || "", end_date: searchParams.get("end_date") || "",
     genres: searchParams.get("genres") || "",
   });
 
   const debouncedQuery = useDebounce(query, 600);
   const activeFilterCount = Object.values(filters).filter(Boolean).length;
-  const activeGenre = filters.genres
-    ? ALL_GENRES.find((g) => String(g.id) === filters.genres)
-    : null;
+  const activeGenre = filters.genres ? ALL_GENRES.find((g) => String(g.id) === filters.genres) : null;
 
   const fetchResults = useCallback(async (q, f) => {
     const hasInput = q.trim() || Object.values(f).some(Boolean);
-
     setLoading(true);
-
     try {
       if (!hasInput) {
-        const data = await animeService.getTopAnime(1, 24);
+        const data = await animeService.getTopAnime(1, PAGE_SIZE);
         const items = data.data || [];
-        setResults(items);
-        setResultCount(items.length);
-        setHasSearched(false);
-        setIsDefaultMode(true);
+        setResults(items); setResultCount(items.length); setHasSearched(false); setIsDefaultMode(true);
         setSearchParams({}, { replace: true });
         return;
       }
-
-      setHasSearched(true);
-      setIsDefaultMode(false);
-
+      setHasSearched(true); setIsDefaultMode(false);
       const apiParams = {};
       if (f.type) apiParams.type = f.type;
       if (f.status) apiParams.status = f.status;
@@ -585,435 +264,142 @@ const SearchPage = () => {
       if (f.start_date) apiParams.start_date = `${f.start_date}-01-01`;
       if (f.end_date) apiParams.end_date = `${f.end_date}-12-31`;
       if (f.genres) apiParams.genres = f.genres;
-
       const data = await animeService.searchAnime(q, apiParams);
       const items = data.data || [];
-      setResults(items);
-      setResultCount(items.length);
-
+      setResults(items); setResultCount(items.length);
       const urlParams = {};
       if (q) urlParams.q = q;
-      Object.entries(f).forEach(([k, v]) => {
-        if (v) urlParams[k] = v;
-      });
+      Object.entries(f).forEach(([k, v]) => { if (v) urlParams[k] = v; });
       setSearchParams(urlParams, { replace: true });
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   }, [setSearchParams]);
 
-  useEffect(() => {
-    fetchResults(debouncedQuery, filters);
-  }, [debouncedQuery, filters, fetchResults]);
+  useEffect(() => { fetchResults(debouncedQuery, filters); }, [debouncedQuery, filters, fetchResults]);
 
   const didMount = useRef(false);
   useEffect(() => {
     if (didMount.current) return;
     didMount.current = true;
-
-    const hasParams =
-      searchParams.get("genres") ||
-      searchParams.get("q") ||
-      searchParams.get("type") ||
-      searchParams.get("status") ||
-      searchParams.get("rating") ||
-      searchParams.get("min_score") ||
-      searchParams.get("season") ||
-      searchParams.get("start_date") ||
-      searchParams.get("end_date");
-
-    if (hasParams) {
-      fetchResults(query, filters);
-      if (searchParams.get("genres")) setShowFilters(true);
-    } else {
-      fetchResults("", EMPTY_FILTERS);
-    }
-  }, []); // eslint-disable-line
+    const hasParams = ["genres","q","type","status","rating","min_score","season","start_date","end_date"].some((k) => searchParams.get(k));
+    if (hasParams) { fetchResults(query, filters); if (searchParams.get("genres")) setShowFilters(true); }
+    else fetchResults("", EMPTY_FILTERS);
+    // eslint-disable-next-line
+  }, []);
 
   const clearFilters = () => setFilters(EMPTY_FILTERS);
-
-  const pageTitle = activeGenre
-    ? `${activeGenre.name} Anime`
-    : query
-    ? `Results for "${query}"`
-    : isDefaultMode
-    ? "Top Anime"
-    : "Browse Anime";
+  const pageTitle = activeGenre ? `${activeGenre.name} Anime` : query ? `Results for "${query}"` : isDefaultMode ? "Top Anime" : "Browse Anime";
 
   return (
-    <div className="min-h-screen" style={{ background: "#0a0a14" }}>
-      <MobileFilterDrawer
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        filters={filters}
-        onChange={setFilters}
-        onClear={clearFilters}
-      />
+    <div className="min-h-screen w-full" style={{ background: "var(--bg-main, #0a0a14)" }}>
+      <ScrollRope color={ACCENT} />
+      <MobileFilterDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} filters={filters} onChange={setFilters} onClear={clearFilters} />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="mb-6 sm:mb-9"
-        >
-          <div className="flex items-center gap-2 mb-1.5">
-            <Sparkles size={14} style={{ color: "rgba(99,102,241,.75)" }} />
-            <span
-              className="text-[10px] uppercase tracking-widest font-bold"
-              style={{ color: "rgba(99,102,241,.65)" }}
-            >
-              Discover
-            </span>
-          </div>
+      <header className="w-full border-b" style={{ borderColor: "var(--border-subtle, rgba(255,255,255,.05))", background: "linear-gradient(180deg,rgba(99,102,241,.06),transparent)" }}>
+        <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-8 xl:px-14 py-8 sm:py-12">
+          <p className="inline-flex items-center gap-1.5 text-xs font-bold mb-1" style={{ color: "var(--color-primary, #a5b4fc)" }}><Sparkles size={13} />Discover</p>
+          <h1 className="font-extrabold tracking-tight" style={{ fontSize: "clamp(26px,4.5vw,46px)", lineHeight: 1.05, color: "var(--text-heading, #fff)" }}>{pageTitle}</h1>
+          {!loading && <p className="mt-2 text-sm" style={{ color: "var(--text-muted, #94a3b8)" }}>{resultCount.toLocaleString()} anime found{activeGenre ? ` in ${activeGenre.name}` : ""}</p>}
+        </div>
+      </header>
 
-          <h1
-            className="font-black text-white leading-none"
-            style={{ fontSize: "clamp(24px,5vw,44px)", letterSpacing: "-0.03em" }}
-          >
-            {pageTitle}
-          </h1>
-
-          {!loading && (
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="mt-2 text-xs sm:text-sm"
-              style={{ color: "rgba(148,163,184,.45)" }}
-            >
-              {resultCount.toLocaleString()} anime found
-              {activeGenre ? ` in ${activeGenre.name}` : ""}
-            </motion.p>
-          )}
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.08 }}
-          className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4"
-        >
+      <div className="sticky top-0 z-30 w-full backdrop-blur-xl border-b" style={{ background: "var(--nav-bg, rgba(10,10,20,.85))", borderColor: "var(--border-subtle, rgba(255,255,255,.05))" }}>
+        <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-8 xl:px-14 py-3 flex items-center gap-2 sm:gap-3">
           <div className="relative flex-1">
-            <Search
-              size={15}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
-              style={{ color: "rgba(148,163,184,.50)" }}
-            />
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search anime by title…"
-              className="w-full rounded-2xl pl-10 pr-9 text-sm text-white outline-none"
-              style={{
-                background: "rgba(255,255,255,.05)",
-                border: "1px solid rgba(255,255,255,.09)",
-                padding: "11px 36px 11px 40px",
-                transition: "border-color .2s, box-shadow .2s",
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = "rgba(99,102,241,.50)";
-                e.target.style.boxShadow = "0 0 0 3px rgba(99,102,241,.10)";
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = "rgba(255,255,255,.09)";
-                e.target.style.boxShadow = "none";
-              }}
-            />
+            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "var(--text-subtle, #64748b)" }} />
+            <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search anime by title"
+              className="w-full rounded-xl pl-10 pr-9 py-2.5 text-sm outline-none focus:border-indigo-400 transition-colors"
+              style={{ background: "var(--nav-btn-bg, rgba(255,255,255,.05))", border: "1px solid var(--border-subtle, rgba(255,255,255,.1))", color: "var(--text-heading, #fff)" }} />
             <AnimatePresence>
               {query && (
-                <motion.button
-                  initial={{ opacity: 0, scale: 0.7 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.7 }}
-                  onClick={() => setQuery("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full flex items-center justify-center transition-all hover:scale-110"
-                  style={{ background: "rgba(255,255,255,.10)" }}
-                >
-                  <X size={11} className="text-white" />
+                <motion.button initial={{ opacity: 0, scale: 0.7 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.7 }}
+                  onClick={() => setQuery("")} aria-label="Clear search" className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full grid place-items-center"
+                  style={{ background: "var(--nav-btn-bg, rgba(255,255,255,.1))", color: "var(--text-heading, #fff)" }}>
+                  <X size={11} />
                 </motion.button>
               )}
             </AnimatePresence>
           </div>
-
-          <button
-            onClick={() => setShowFilters((f) => !f)}
-            className="hidden lg:flex items-center gap-2 rounded-2xl font-semibold transition-all hover:scale-105 active:scale-95 flex-shrink-0"
+          <button onClick={() => setShowFilters((f) => !f)} aria-expanded={showFilters}
+            className="hidden lg:flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-[13px] font-semibold border transition-colors flex-shrink-0"
             style={{
-              padding: "11px 16px",
-              fontSize: 13,
-              background: showFilters ? "rgba(99,102,241,.25)" : "rgba(255,255,255,.05)",
-              color: showFilters ? "#a5b4fc" : "rgba(255,255,255,.55)",
-              border: showFilters ? "1px solid rgba(99,102,241,.40)" : "1px solid rgba(255,255,255,.09)",
-            }}
-          >
-            <SlidersHorizontal size={14} />
-            Filters
-            {activeFilterCount > 0 && (
-              <span
-                className="font-black rounded-full"
-                style={{
-                  fontSize: 9,
-                  padding: "2px 6px",
-                  background: "rgba(99,102,241,.40)",
-                  color: "#a5b4fc",
-                  border: "1px solid rgba(99,102,241,.50)",
-                }}
-              >
-                {activeFilterCount}
-              </span>
-            )}
+              background: showFilters ? "var(--nav-link-active-bg, rgba(165,180,252,.16))" : "var(--nav-btn-bg, rgba(255,255,255,.05))",
+              borderColor: showFilters ? "var(--border-accent, rgba(165,180,252,.45))" : "var(--border-subtle, rgba(255,255,255,.1))",
+              color: showFilters ? ACCENT : "var(--text-muted, rgba(255,255,255,.65))",
+            }}>
+            <SlidersHorizontal size={14} />Filters
+            {activeFilterCount > 0 && <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full text-black" style={{ background: ACCENT }}>{activeFilterCount}</span>}
           </button>
-
-          <button
-            onClick={() => setDrawerOpen(true)}
-            className="lg:hidden flex items-center gap-1.5 rounded-2xl font-semibold transition-all hover:scale-105 active:scale-95 flex-shrink-0"
+          <button onClick={() => setDrawerOpen(true)}
+            className="lg:hidden flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-[13px] font-semibold border flex-shrink-0"
             style={{
-              padding: "11px 14px",
-              fontSize: 13,
-              background: activeFilterCount > 0 ? "rgba(99,102,241,.25)" : "rgba(255,255,255,.05)",
-              color: activeFilterCount > 0 ? "#a5b4fc" : "rgba(255,255,255,.55)",
-              border: activeFilterCount > 0 ? "1px solid rgba(99,102,241,.40)" : "1px solid rgba(255,255,255,.09)",
-            }}
-          >
+              background: activeFilterCount > 0 ? "var(--nav-link-active-bg, rgba(165,180,252,.16))" : "var(--nav-btn-bg, rgba(255,255,255,.05))",
+              borderColor: activeFilterCount > 0 ? "var(--border-accent, rgba(165,180,252,.45))" : "var(--border-subtle, rgba(255,255,255,.1))",
+              color: activeFilterCount > 0 ? ACCENT : "var(--text-muted, rgba(255,255,255,.65))",
+            }}>
             <SlidersHorizontal size={14} />
-            <span className="sm:inline hidden">Filters</span>
-            {activeFilterCount > 0 && (
-              <span
-                className="font-black rounded-full"
-                style={{
-                  fontSize: 9,
-                  padding: "2px 6px",
-                  background: "rgba(99,102,241,.40)",
-                  color: "#a5b4fc",
-                }}
-              >
-                {activeFilterCount}
-              </span>
-            )}
+            {activeFilterCount > 0 && <span className="text-[10px] font-black px-1.5 py-0.5 rounded-full text-black" style={{ background: ACCENT }}>{activeFilterCount}</span>}
           </button>
-
-          <div
-            className="hidden sm:flex items-center p-1 rounded-xl gap-0.5 flex-shrink-0"
-            style={{
-              background: "rgba(255,255,255,.05)",
-              border: "1px solid rgba(255,255,255,.08)",
-            }}
-          >
-            {[
-              { key: "grid", Icon: LayoutGrid },
-              { key: "list", Icon: LayoutList },
-            ].map(({ key, Icon }) => (
-              <button
-                key={key}
-                onClick={() => setViewMode(key)}
-                className="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
-                style={{
-                  background: viewMode === key ? "rgba(99,102,241,.30)" : "transparent",
-                  color: viewMode === key ? "#a5b4fc" : "rgba(255,255,255,.30)",
-                  border: viewMode === key ? "1px solid rgba(99,102,241,.28)" : "1px solid transparent",
-                }}
-              >
-                <Icon size={13} />
+          <div className="hidden sm:flex p-1 rounded-xl gap-1 flex-shrink-0" style={{ background: "var(--nav-btn-bg, rgba(255,255,255,.05))", border: "1px solid var(--border-subtle, rgba(255,255,255,.1))" }} role="group" aria-label="Layout">
+            {[["grid", LayoutGrid], ["list", LayoutList]].map(([k, I]) => (
+              <button key={k} onClick={() => setViewMode(k)} aria-label={`${k} view`} aria-pressed={viewMode === k}
+                className="w-9 h-9 rounded-lg grid place-items-center transition-colors"
+                style={{ background: viewMode === k ? "rgba(165,180,252,.2)" : "transparent", color: viewMode === k ? ACCENT : "var(--text-muted, rgba(255,255,255,.4))" }}>
+                <I size={15} />
               </button>
             ))}
           </div>
-        </motion.div>
+        </div>
+      </div>
 
+      <main className="w-full max-w-[1920px] mx-auto px-4 sm:px-8 xl:px-14 py-6 sm:py-8">
         <ActiveTags filters={filters} onChange={setFilters} />
-        {!query.trim() && activeFilterCount === 0 && !loading && results.length > 0 && <DefaultBrowseBanner />}
+        {!query.trim() && activeFilterCount === 0 && !loading && results.length > 0 && (
+          <div className="flex items-center gap-2 mb-5 px-3.5 py-2 rounded-xl" style={{ background: "rgba(251,191,36,.08)", border: "1px solid rgba(251,191,36,.18)" }}>
+            <Flame size={13} style={{ color: "#fbbf24" }} /><span className="text-xs font-semibold text-amber-300">Showing top anime by default</span>
+          </div>
+        )}
 
-        <div className="flex gap-5 lg:gap-6 items-start">
+        <div className="flex gap-6 items-start">
           <AnimatePresence>
             {showFilters && (
-              <motion.div
-                key="sidebar"
-                initial={{ opacity: 0, width: 0 }}
-                animate={{ opacity: 1, width: 256 }}
-                exit={{ opacity: 0, width: 0 }}
-                transition={{ duration: 0.28, ease: "easeInOut" }}
-                className="hidden lg:block flex-shrink-0 overflow-hidden"
-                style={{ minWidth: showFilters ? 256 : 0 }}
-              >
-                <div style={{ width: 256 }}>
-                  <FilterPanel filters={filters} onChange={setFilters} onClear={clearFilters} />
-                </div>
+              <motion.div key="sidebar" initial={{ opacity: 0, width: 0 }} animate={{ opacity: 1, width: 272 }} exit={{ opacity: 0, width: 0 }}
+                transition={{ duration: 0.22 }} className="hidden lg:block flex-shrink-0 overflow-hidden">
+                <div style={{ width: 272 }} className="lg:sticky lg:top-20"><FilterPanel filters={filters} onChange={setFilters} onClear={clearFilters} /></div>
               </motion.div>
             )}
           </AnimatePresence>
 
           <div className="flex-1 min-w-0">
-            <AnimatePresence mode="wait">
-              {loading && (
-                <motion.div
-                  key="loading"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4"
-                >
-                  {Array.from({ length: 10 }).map((_, i) => (
-                    <CardSkeleton key={i} index={i} />
-                  ))}
-                </motion.div>
-              )}
+            {loading && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
+                {Array.from({ length: PAGE_SIZE }).map((_, i) => <Skeleton key={i} />)}
+              </div>
+            )}
 
-              {!loading && results.length > 0 && (
-                <motion.div
-                  key="results"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.28 }}
-                >
-                  {viewMode === "grid" ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-                      {results.map((anime, i) => (
-                        <AnimeCard key={anime.mal_id} anime={anime} index={i} />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="flex flex-col gap-2 sm:gap-2.5">
-                      {results.map((anime, i) => (
-                        <ListRow key={anime.mal_id} anime={anime} index={i} />
-                      ))}
-                    </div>
-                  )}
-                </motion.div>
-              )}
+            {!loading && results.length > 0 && (
+              viewMode === "grid" ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
+                  {results.map((a, i) => <AnimeCard key={a.mal_id} anime={a} index={i} />)}
+                </div>
+              ) : (
+                <div className="grid gap-2 xl:grid-cols-2">{results.map((a, i) => <ListRow key={a.mal_id} anime={a} index={i} />)}</div>
+              )
+            )}
 
-              {!loading && results.length === 0 && (
-                <motion.div
-                  key="empty"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                >
-                  <EmptyState searched={hasSearched} query={query} />
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {!loading && results.length === 0 && (
+              <div className="py-24 text-center">
+                <p className="text-lg font-bold" style={{ color: "var(--text-heading, #fff)" }}>{hasSearched ? "No results found" : "Find your next anime"}</p>
+                <p className="text-sm mt-1 max-w-sm mx-auto" style={{ color: "var(--text-muted, #94a3b8)" }}>
+                  {hasSearched
+                    ? query ? `Nothing matched "${query}". Try different keywords or fewer filters.` : "Nothing matched your filters. Try removing some."
+                    : "Browse the most popular anime below, or start typing to search by title."}
+                </p>
+              </div>
+            )}
           </div>
         </div>
-      </div>
+      </main>
     </div>
-  );
-};
-
-/* ══════════════════════════════════════════════════════════
-   LIST ROW
-══════════════════════════════════════════════════════════ */
-const ListRow = ({ anime, index }) => {
-  const [imgErr, setImgErr] = useState(false);
-  const [hov, setHov] = useState(false);
-
-  const img = anime.images?.jpg?.large_image_url || anime.images?.jpg?.image_url;
-  const title = anime.title_english || anime.title;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: Math.min(index * 0.025, 0.4) }}
-    >
-      <Link
-        to={`/anime/${anime.mal_id}`}
-        onMouseEnter={() => setHov(true)}
-        onMouseLeave={() => setHov(false)}
-        className="flex items-center gap-3 sm:gap-4 p-3 sm:p-3.5 rounded-2xl transition-all duration-200"
-        style={{
-          background: hov ? "rgba(255,255,255,.06)" : "rgba(255,255,255,.03)",
-          border: `1px solid ${hov ? "rgba(99,102,241,.28)" : "rgba(255,255,255,.07)"}`,
-          transform: hov ? "scale(1.008)" : "scale(1)",
-        }}
-      >
-        <span
-          className="flex-shrink-0 font-black text-center"
-          style={{
-            width: 24,
-            fontSize: 11,
-            color: index < 3 ? "#fbbf24" : "rgba(148,163,184,.30)",
-          }}
-        >
-          {index + 1}
-        </span>
-
-        <div
-          className="flex-shrink-0 rounded-xl overflow-hidden"
-          style={{ width: 44, height: 58, border: "1px solid rgba(255,255,255,.08)" }}
-        >
-          {!imgErr ? (
-            <img
-              src={img}
-              alt={title}
-              className="w-full h-full object-cover"
-              style={{
-                transform: hov ? "scale(1.08)" : "scale(1)",
-                transition: "transform .4s",
-              }}
-              onError={() => setImgErr(true)}
-            />
-          ) : (
-            <div
-              className="w-full h-full flex items-center justify-center text-xl"
-              style={{ background: "rgba(255,255,255,.04)" }}
-            >
-              🎬
-            </div>
-          )}
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <p
-            className="font-bold line-clamp-1 transition-colors duration-200"
-            style={{ fontSize: "clamp(12px,2vw,14px)", color: hov ? "#a5b4fc" : "#fff" }}
-          >
-            {title}
-          </p>
-          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-            {anime.type && (
-              <span className="text-[10px] font-bold uppercase" style={{ color: "rgba(148,163,184,.42)" }}>
-                {anime.type}
-              </span>
-            )}
-            {anime.episodes && (
-              <span className="text-[10px]" style={{ color: "rgba(148,163,184,.35)" }}>
-                {anime.episodes} eps
-              </span>
-            )}
-            {anime.genres?.slice(0, 2).map((g) => (
-              <span
-                key={g.mal_id}
-                className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md"
-                style={{
-                  background: "rgba(99,102,241,.10)",
-                  border: "1px solid rgba(99,102,241,.18)",
-                  color: "rgba(165,180,252,.65)",
-                }}
-              >
-                {g.name}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {anime.score && (
-          <div className="flex-shrink-0 flex items-center gap-1">
-            <Star size={10} className="text-yellow-400 fill-yellow-400" />
-            <span className="font-bold text-white" style={{ fontSize: 12 }}>
-              {anime.score.toFixed(1)}
-            </span>
-          </div>
-        )}
-
-        {anime.status === "Currently Airing" && (
-          <span
-            className="flex-shrink-0 w-2 h-2 rounded-full"
-            style={{ background: "#4ade80", boxShadow: "0 0 6px #4ade80" }}
-          />
-        )}
-      </Link>
-    </motion.div>
   );
 };
 

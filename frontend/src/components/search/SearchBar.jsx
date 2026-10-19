@@ -7,57 +7,92 @@ import { useDebounce } from "../../hooks/useDebounce";
 import { animeService } from "../../services/animeService";
 import SearchSuggestions from "./SearchSuggestions";
 
-const SearchBar = ({ autoFocus = false, onSearch, placeholder, className = "" }) => {
-  const [query,              setQuery]              = useState("");
-  const [suggestions,        setSuggestions]        = useState([]);
-  const [showSuggestions,    setShowSuggestions]    = useState(false);
+/**
+ * Props
+ *  - autoFocus   focus the input on mount
+ *  - onSearch    called after navigating (e.g. to close a mobile drawer)
+ *  - placeholder input placeholder
+ *  - className   extra wrapper classes
+ *  - hotkey      press "/" anywhere to focus (enable on ONE instance only)
+ */
+const SearchBar = ({
+  autoFocus = false,
+  onSearch,
+  placeholder,
+  className = "",
+  hotkey = false,
+}) => {
+  const [query, setQuery] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
-  const [isFocused,          setIsFocused]          = useState(false);
-  const [selectedIndex,      setSelectedIndex]      = useState(-1);  // keyboard nav
+  const [isFocused, setIsFocused] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
 
   const debouncedQuery = useDebounce(query, 380);
-  const navigate       = useNavigate();
-  const inputRef       = useRef(null);
-  const containerRef   = useRef(null);
-  const abortRef       = useRef(null);   // cancel stale requests
+  const navigate = useNavigate();
+  const inputRef = useRef(null);
+  const containerRef = useRef(null);
+  const abortRef = useRef(null);
+
+  /* ── reset helper ── */
+  const resetDropdown = useCallback(() => {
+    setSuggestions([]);
+    setShowSuggestions(false);
+    setSelectedIndex(-1);
+    setLoadingSuggestions(false);
+  }, []);
 
   /* ── auto-focus ── */
   useEffect(() => {
-    if (autoFocus) {
-      const t = setTimeout(() => inputRef.current?.focus(), 60);
-      return () => clearTimeout(t);
-    }
+    if (!autoFocus) return;
+    const t = setTimeout(() => inputRef.current?.focus(), 60);
+    return () => clearTimeout(t);
   }, [autoFocus]);
 
+  /* ── "/" hotkey ── */
+  useEffect(() => {
+    if (!hotkey) return;
+    const onKey = (e) => {
+      const tag = e.target?.tagName;
+      const typing = tag === "INPUT" || tag === "TEXTAREA" || e.target?.isContentEditable;
+      if (e.key === "/" && !typing && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault();
+        inputRef.current?.focus();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [hotkey]);
+
   /* ── fetch suggestions ── */
-  const fetchSuggestions = useCallback(async (q) => {
-    /* cancel previous */
-    abortRef.current?.abort();
-    const controller  = new AbortController();
-    abortRef.current  = controller;
+  const fetchSuggestions = useCallback(
+    async (q) => {
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
 
-    if (q.trim().length < 2) {
-      setSuggestions([]);
-      setShowSuggestions(false);
-      setLoadingSuggestions(false);
-      return;
-    }
+      if (q.trim().length < 2) {
+        resetDropdown();
+        return;
+      }
 
-    setLoadingSuggestions(true);
-    try {
-      const data = await animeService.getSearchSuggestions(q);
-      if (controller.signal.aborted) return;
-      const items = data?.data ?? [];
-      setSuggestions(items);
-      setShowSuggestions(items.length > 0 || true); // show "no results" too
-      setSelectedIndex(-1);
-    } catch (err) {
-      if (err?.cancelled || controller.signal.aborted) return;
-      setSuggestions([]);
-    } finally {
-      if (!controller.signal.aborted) setLoadingSuggestions(false);
-    }
-  }, []);
+      setLoadingSuggestions(true);
+      try {
+        const data = await animeService.getSearchSuggestions(q);
+        if (controller.signal.aborted) return;
+        setSuggestions(data?.data ?? []);
+        setShowSuggestions(true); // also shows the "no results" state
+        setSelectedIndex(-1);
+      } catch (err) {
+        if (err?.cancelled || controller.signal.aborted) return;
+        setSuggestions([]);
+      } finally {
+        if (!controller.signal.aborted) setLoadingSuggestions(false);
+      }
+    },
+    [resetDropdown]
+  );
 
   useEffect(() => {
     fetchSuggestions(debouncedQuery);
@@ -75,74 +110,64 @@ const SearchBar = ({ autoFocus = false, onSearch, placeholder, className = "" })
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  /* ── actions ── */
+  const handleSuggestionClick = (anime) => {
+    setQuery("");
+    resetDropdown();
+    navigate(`/anime/${anime.mal_id}`);
+    onSearch?.();
+  };
+
+  const handleSearch = (e) => {
+    e?.preventDefault();
+    const q = query.trim();
+    if (!q) return;
+    abortRef.current?.abort();
+    resetDropdown();
+    navigate(`/search?q=${encodeURIComponent(q)}`);
+    onSearch?.();
+  };
+
+  const handleClear = () => {
+    setQuery("");
+    abortRef.current?.abort();
+    resetDropdown();
+    inputRef.current?.focus();
+  };
+
   /* ── keyboard navigation ── */
   const handleKeyDown = (e) => {
+    if (e.key === "Escape") {
+      setShowSuggestions(false);
+      setSelectedIndex(-1);
+      inputRef.current?.blur();
+      return;
+    }
     if (!showSuggestions || suggestions.length === 0) return;
 
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setSelectedIndex(i => Math.min(i + 1, suggestions.length - 1));
+      setSelectedIndex((i) => Math.min(i + 1, suggestions.length - 1));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setSelectedIndex(i => Math.max(i - 1, -1));
-    } else if (e.key === "Escape") {
-      setShowSuggestions(false);
-      setSelectedIndex(-1);
-      inputRef.current?.blur();
+      setSelectedIndex((i) => Math.max(i - 1, -1));
     } else if (e.key === "Enter" && selectedIndex >= 0) {
       e.preventDefault();
       handleSuggestionClick(suggestions[selectedIndex]);
     }
   };
 
-  /* ── submit (navigate to search page) ── */
-  const handleSearch = (e) => {
-    e?.preventDefault();
-    const q = query.trim();
-    if (!q) return;
-    setShowSuggestions(false);
-    setSelectedIndex(-1);
-    navigate(`/search?q=${encodeURIComponent(q)}`);
-    onSearch?.();
-  };
-
-  /* ── suggestion click (navigate to detail page) ── */
-  const handleSuggestionClick = (anime) => {
-    setQuery("");
-    setSuggestions([]);
-    setShowSuggestions(false);
-    setSelectedIndex(-1);
-    navigate(`/anime/${anime.mal_id}`);
-    onSearch?.();
-  };
-
-  /* ── clear ── */
-  const handleClear = () => {
-    setQuery("");
-    setSuggestions([]);
-    setShowSuggestions(false);
-    setSelectedIndex(-1);
-    abortRef.current?.abort();
-    inputRef.current?.focus();
-  };
-
   const isOpen = showSuggestions && query.trim().length >= 2;
 
   return (
     <div ref={containerRef} className={`relative w-full ${className}`}>
-      <form onSubmit={handleSearch} className="relative" autoComplete="off">
-
+      <form onSubmit={handleSearch} className="relative" autoComplete="off" role="search">
         {/* search icon */}
-        <div
-          className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none
-                     flex items-center justify-center transition-all duration-200"
-        >
+        <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none flex items-center">
           <Search
             size={16}
             style={{
-              color: isFocused
-                ? "rgba(99,102,241,.85)"
-                : "rgba(148,163,184,.45)",
+              color: isFocused ? "rgba(129,140,248,.9)" : "rgba(148,163,184,.45)",
               transition: "color .2s",
             }}
           />
@@ -152,33 +177,49 @@ const SearchBar = ({ autoFocus = false, onSearch, placeholder, className = "" })
         <input
           ref={inputRef}
           type="text"
+          role="combobox"
+          aria-expanded={isOpen}
+          aria-autocomplete="list"
+          aria-label="Search anime"
           value={query}
-          onChange={e => setQuery(e.target.value)}
+          onChange={(e) => setQuery(e.target.value)}
           onFocus={() => {
             setIsFocused(true);
-            if (query.trim().length >= 2) setShowSuggestions(true);
+            if (query.trim().length >= 2 && suggestions.length > 0) setShowSuggestions(true);
           }}
           onBlur={() => setIsFocused(false)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder ?? "Search anime by title…"}
-          className="w-full text-sm text-white outline-none"
+          className="w-full text-sm text-white outline-none placeholder:text-slate-500"
           style={{
-            background:    "rgba(255,255,255,.05)",
-            border:        isFocused
-              ? "1px solid rgba(99,102,241,.50)"
-              : "1px solid rgba(255,255,255,.09)",
-            borderRadius:  isOpen ? "16px 16px 0 0" : 16,
-            padding:       "11px 40px 11px 40px",
-            boxShadow:     isFocused
-              ? "0 0 0 3px rgba(99,102,241,.10), 0 4px 24px rgba(0,0,0,.30)"
+            background: "rgba(255,255,255,.05)",
+            border: isFocused ? "1px solid rgba(99,102,241,.55)" : "1px solid rgba(255,255,255,.09)",
+            borderRadius: isOpen ? "16px 16px 0 0" : 16,
+            padding: "12px 76px 12px 42px",
+            boxShadow: isFocused
+              ? "0 0 0 3px rgba(99,102,241,.12), 0 4px 24px rgba(0,0,0,.30)"
               : "0 2px 12px rgba(0,0,0,.20)",
-            transition:    "border-color .2s, box-shadow .2s, border-radius .15s",
-            caretColor:    "#a5b4fc",
+            transition: "border-color .2s, box-shadow .2s, border-radius .15s",
+            caretColor: "#a5b4fc",
           }}
         />
 
-        {/* loading spinner OR clear button */}
+        {/* right controls */}
         <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+          {/* hotkey hint */}
+          {hotkey && !query && !isFocused && (
+            <kbd
+              className="hidden sm:inline-flex items-center justify-center w-5 h-5 rounded-md text-[10px] font-semibold"
+              style={{
+                background: "rgba(255,255,255,.07)",
+                border: "1px solid rgba(255,255,255,.10)",
+                color: "rgba(148,163,184,.65)",
+              }}
+            >
+              /
+            </kbd>
+          )}
+
           <AnimatePresence mode="wait">
             {loadingSuggestions ? (
               <motion.div
@@ -186,42 +227,38 @@ const SearchBar = ({ autoFocus = false, onSearch, placeholder, className = "" })
                 initial={{ opacity: 0, scale: 0.7 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.7 }}
-                className="w-4 h-4 rounded-full border-2 border-transparent"
-                style={{
-                  borderTopColor: "#a5b4fc",
-                  animation: "spin 0.7s linear infinite",
-                }}
+                className="w-4 h-4 rounded-full border-2 border-transparent animate-spin"
+                style={{ borderTopColor: "#a5b4fc" }}
               />
             ) : query ? (
               <motion.button
                 key="clear"
                 type="button"
+                aria-label="Clear search"
                 initial={{ opacity: 0, scale: 0.7 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.7 }}
                 onClick={handleClear}
-                className="w-5 h-5 rounded-full flex items-center justify-center
-                           transition-all hover:scale-110 active:scale-90"
+                className="w-5 h-5 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-90"
                 style={{
                   background: "rgba(255,255,255,.12)",
                   border: "1px solid rgba(255,255,255,.10)",
                 }}
               >
-                <X size={10} style={{ color: "rgba(255,255,255,.70)" }} />
+                <X size={10} style={{ color: "rgba(255,255,255,.75)" }} />
               </motion.button>
             ) : null}
           </AnimatePresence>
 
-          {/* submit arrow (visible on focus) */}
           <AnimatePresence>
             {query.trim() && (
               <motion.button
                 type="submit"
+                aria-label="Search"
                 initial={{ opacity: 0, x: 6 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 6 }}
-                className="w-6 h-6 rounded-lg flex items-center justify-center
-                           transition-all hover:scale-110 active:scale-90"
+                className="w-6 h-6 rounded-lg flex items-center justify-center transition-all hover:scale-110 active:scale-90"
                 style={{
                   background: "rgba(99,102,241,.30)",
                   border: "1px solid rgba(99,102,241,.40)",
@@ -234,7 +271,6 @@ const SearchBar = ({ autoFocus = false, onSearch, placeholder, className = "" })
         </div>
       </form>
 
-      {/* suggestions dropdown */}
       <SearchSuggestions
         suggestions={suggestions}
         loading={loadingSuggestions}
@@ -245,9 +281,6 @@ const SearchBar = ({ autoFocus = false, onSearch, placeholder, className = "" })
         selectedIndex={selectedIndex}
         onHoverIndex={setSelectedIndex}
       />
-
-      {/* spin keyframe */}
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 };
