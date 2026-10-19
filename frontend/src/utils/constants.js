@@ -16,7 +16,14 @@ const required = (key) => {
 };
 
 /* ── API URLs ── */
-export const API_BASE_URL   = required("VITE_API_BASE_URL");   // http://localhost:5000/api
+const rawApiUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL;
+if (!rawApiUrl) {
+  console.warn(
+    "[AniFind] VITE_API_BASE_URL is not set. Defaulting to http://localhost:5000/api. " +
+    "Set VITE_API_BASE_URL in your environment / Vercel config."
+  );
+}
+export const API_BASE_URL = rawApiUrl || "http://localhost:5000/api";
 
 // Public Jikan API (api.jikan.moe) was sunset/discontinued in Oct 2026.
 // Tenrai (https://api.tenrai.org/v1) is the 100% schema-compatible drop-in successor.
