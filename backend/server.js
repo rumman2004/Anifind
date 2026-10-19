@@ -18,29 +18,37 @@ connectDB();
 /* ══════════════════════════════════════════════════════════
    CORS
 ══════════════════════════════════════════════════════════ */
+const envOrigins = (process.env.CLIENT_URL || "")
+  .split(",")
+  .map((url) => url.trim().replace(/\/$/, ""))
+  .filter(Boolean);
+
 const ALLOWED_ORIGINS = [
-  process.env.CLIENT_URL,
+  ...envOrigins,
+  "https://anifind-five.vercel.app",
   "http://localhost:5173",
   "http://localhost:3000",
-].filter(Boolean);
+];
+
+const isOriginAllowed = (origin) => {
+  if (!origin) return true;
+  // Direct match in allowed list
+  if (ALLOWED_ORIGINS.includes(origin)) return true;
+  // Match any AniFind Vercel deployment (preview branches, prod, etc.)
+  if (/^https:\/\/anifind.*\.vercel\.app$/.test(origin)) return true;
+  return false;
+};
 
 const corsOptions = {
   origin(origin, callback) {
-    // Allow requests with no Origin header
-    // Examples: Postman, mobile apps, server-to-server, uptime checks
-    if (!origin) {
+    if (isOriginAllowed(origin)) {
       return callback(null, true);
     }
-
-    if (ALLOWED_ORIGINS.includes(origin)) {
-      return callback(null, true);
-    }
-
     return callback(new Error(`CORS: origin "${origin}" is not allowed`));
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
   exposedHeaders: ["X-Total-Count"],
   optionsSuccessStatus: 200,
 };
